@@ -116,6 +116,18 @@ export default function Sidebar() {
         </button>
       </div>
 
+      {/* Logout Button */}
+      <div className="px-4 pb-2">
+        <Link href="/login">
+          <button
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-all"
+          >
+            <span className="text-lg">🚪</span>
+            Logout
+          </button>
+        </Link>
+      </div>
+
       {/* User Profile */}
       <div className="p-4 border-t border-[var(--card-border)]">
         <Link

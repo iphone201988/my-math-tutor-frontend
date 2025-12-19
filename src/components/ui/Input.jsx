@@ -20,16 +20,16 @@ const Input = forwardRef(({
       )}
       <div className="relative">
         {icon && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-secondary">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground-secondary text-xl pointer-events-none z-10">
             {icon}
           </span>
         )}
         <input
           ref={ref}
           type={type}
+          style={icon ? { textIndent: '3rem', paddingRight: '1rem' } : { paddingLeft: '1rem', paddingRight: '1rem' }}
           className={cn(
             'input',
-            icon && 'pl-10',
             error && 'border-error focus:border-error focus:shadow-[0_0_0_3px_rgba(239,68,68,0.2)]',
             className
           )}
