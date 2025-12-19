@@ -239,9 +239,9 @@ export default function DashboardPage() {
                 <p className="text-white/80 text-sm mb-4">
                   {userStats.xpPoints} / {userStats.nextLevelXp} XP
                 </p>
-                <div className="h-3 rounded-full bg-white/20 overflow-hidden">
+                <div className="h-3 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
                   <div
-                    className="h-full bg-white rounded-full transition-all"
+                    className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all"
                     style={{ width: `${userStats.levelProgress * 100}%` }}
                   />
                 </div>

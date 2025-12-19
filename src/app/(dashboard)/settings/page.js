@@ -270,7 +270,7 @@ export default function SettingsPage() {
                         }`}
                     >
                       <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${notifications[item.key] ? 'translate-x-7' : 'translate-x-1'
+                        className={`absolute top-1 w-4 h-4 bg-primary-500 rounded-full transition-transform ${notifications[item.key] ? 'translate-x-7' : 'translate-x-1'
                           }`}
                       />
                     </button>

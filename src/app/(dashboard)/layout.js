@@ -3,14 +3,14 @@ import MobileNav from '@/components/layout/MobileNav';
 
 export default function DashboardLayout({ children }) {
     return (
-        <div className="min-h-screen bg-background-secondary">
-            {/* Desktop Sidebar */}
+        <div className="fixed inset-0 bg-background-secondary">
+            {/* Desktop Sidebar - Fixed */}
             <div className="hidden lg:block">
                 <Sidebar />
             </div>
 
-            {/* Main Content */}
-            <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0">
+            {/* Main Content - Scrollable */}
+            <main className="fixed inset-0 lg:left-64 overflow-y-auto pb-20 lg:pb-0">
                 {children}
             </main>
 

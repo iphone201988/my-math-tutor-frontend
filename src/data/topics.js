@@ -301,3 +301,34 @@ export const gradeBands = [
     color: "from-purple-400 to-pink-500"
   }
 ];
+
+// Dummy lessons data
+export const lessons = {
+  "algebra-basics": [
+    { id: 1, title: "Introduction to Variables", duration: 15, completed: true, locked: false },
+    { id: 2, title: "Understanding Expressions", duration: 20, completed: true, locked: false },
+    { id: 3, title: "Simple Equations", duration: 25, completed: true, locked: false },
+    { id: 4, title: "Solving for X", duration: 30, completed: false, locked: false },
+    { id: 5, title: "Word Problems", duration: 35, completed: false, locked: false },
+    { id: 6, title: "Practice Quiz", duration: 20, completed: false, locked: true }
+  ],
+  "linear-equations": [
+    { id: 1, title: "Introduction to Linear Functions", duration: 20, completed: true, locked: false },
+    { id: 2, title: "Slope and Y-Intercept", duration: 25, completed: true, locked: false },
+    { id: 3, title: "Graphing Linear Equations", duration: 30, completed: false, locked: false },
+    { id: 4, title: "Systems of Equations", duration: 35, completed: false, locked: false },
+    { id: 5, title: "Final Assessment", duration: 25, completed: false, locked: true }
+  ],
+  "counting": [
+    { id: 1, title: "Numbers 1-10", duration: 10, completed: true, locked: false },
+    { id: 2, title: "Numbers 11-20", duration: 10, completed: true, locked: false },
+    { id: 3, title: "Counting to 100", duration: 15, completed: true, locked: false },
+    { id: 4, title: "Skip Counting", duration: 15, completed: true, locked: false },
+    { id: 5, title: "Number Patterns", duration: 20, completed: true, locked: false },
+    { id: 6, title: "Practice Quiz", duration: 15, completed: true, locked: false }
+  ]
+};
+
+export const getLessonsByTopicId = (topicId) => {
+  return lessons[topicId] || [];
+};

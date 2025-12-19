@@ -31,6 +31,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
+        suppressHydrationWarning
       >
         <ThemeProvider>
           {children}

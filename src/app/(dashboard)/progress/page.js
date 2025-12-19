@@ -129,9 +129,9 @@ export default function ProgressPage() {
               <p className="text-white/60 text-xs mb-4">
                 {userStats.xpPoints} XP earned
               </p>
-              <div className="h-3 rounded-full bg-white/20 overflow-hidden">
+              <div className="h-3 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
                 <div
-                  className="h-full bg-white rounded-full"
+                  className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
                   style={{ width: `${userStats.levelProgress * 100}%` }}
                 />
               </div>

@@ -56,7 +56,7 @@ export default function SolvePage() {
   const handleHint = async () => {
     setIsTyping(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const hintMessage = {
       id: `msg-${Date.now()}`,
       role: 'teacher',
@@ -70,28 +70,26 @@ export default function SolvePage() {
 
   const renderMessage = (msg) => {
     const isTeacher = msg.role === 'teacher';
-    
+
     return (
       <div
         key={msg.id}
         className={`flex gap-3 ${isTeacher ? '' : 'flex-row-reverse'}`}
       >
         {/* Avatar */}
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-          isTeacher 
-            ? 'bg-gradient-to-br from-primary-400 to-primary-600' 
-            : 'bg-gradient-to-br from-secondary-400 to-secondary-600'
-        }`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${isTeacher
+          ? 'bg-gradient-to-br from-primary-400 to-primary-600'
+          : 'bg-gradient-to-br from-secondary-400 to-secondary-600'
+          }`}>
           {isTeacher ? '🤖' : getInitials(currentUser.firstName, currentUser.lastName)}
         </div>
 
         {/* Message */}
         <div className={`max-w-[75%] ${isTeacher ? '' : 'text-right'}`}>
-          <div className={`rounded-2xl px-4 py-3 ${
-            isTeacher 
-              ? 'bg-neutral-100 dark:bg-neutral-800 rounded-tl-none' 
-              : 'bg-primary-500 text-white rounded-tr-none'
-          }`}>
+          <div className={`rounded-2xl px-4 py-3 ${isTeacher
+            ? 'bg-neutral-100 dark:bg-neutral-800 rounded-tl-none'
+            : 'bg-primary-500 text-white rounded-tr-none'
+            }`}>
             {/* Type indicator */}
             {msg.type === 'hint' && (
               <span className="inline-block px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium mb-2">
@@ -103,7 +101,7 @@ export default function SolvePage() {
                 🎉 Correct!
               </span>
             )}
-            
+
             {/* Message content */}
             <div className={`text-sm whitespace-pre-wrap ${isTeacher ? 'text-foreground' : ''}`}>
               {renderMessageContent(msg.message)}
@@ -136,41 +134,43 @@ export default function SolvePage() {
   };
 
   return (
-    <div className="h-screen flex flex-col lg:flex-row">
+    <div className="fixed inset-0 lg:ml-64 flex flex-col lg:flex-row bg-background-secondary">
       {/* Problem Sidebar (Desktop) */}
-      <div className="hidden lg:block w-80 border-r border-[var(--card-border)] bg-background p-6 overflow-y-auto">
-        <h2 className="font-semibold mb-4">Current Problem</h2>
-        <Card className="mb-6">
-          <CardContent>
-            <p className="text-sm text-foreground-secondary mb-3">{currentProblem.text}</p>
-            <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
-              <MathRenderer latex={currentProblem.latex} display />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="hidden lg:flex lg:flex-col w-80 border-r border-[var(--card-border)] bg-background">
+        <div className="flex-1 overflow-y-auto p-6">
+          <h2 className="font-semibold mb-4">Current Problem</h2>
+          <Card className="mb-6">
+            <CardContent>
+              <p className="text-sm text-foreground-secondary mb-3">{currentProblem.text}</p>
+              <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+                <MathRenderer latex={currentProblem.latex} display />
+              </div>
+            </CardContent>
+          </Card>
 
-        <h3 className="font-semibold mb-3">Available Hints</h3>
-        <div className="space-y-2">
-          {currentProblem.hints.map((hint, i) => (
-            <div key={i} className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-sm">
-              <span className="text-foreground-secondary">Hint {i + 1}</span>
-            </div>
-          ))}
-        </div>
+          <h3 className="font-semibold mb-3">Available Hints</h3>
+          <div className="space-y-2">
+            {currentProblem.hints.map((hint, i) => (
+              <div key={i} className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-sm">
+                <span className="text-foreground-secondary">Hint {i + 1}</span>
+              </div>
+            ))}
+          </div>
 
-        <div className="mt-6">
-          <Link href="/capture">
-            <Button variant="secondary" className="w-full">
-              📷 Scan New Problem
-            </Button>
-          </Link>
+          <div className="mt-6">
+            <Link href="/capture">
+              <Button variant="secondary" className="w-full">
+                📷 Scan New Problem
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-background-secondary">
-        {/* Header */}
-        <div className="bg-background border-b border-[var(--card-border)] px-6 py-4">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header - Fixed */}
+        <div className="flex-shrink-0 bg-background border-b border-[var(--card-border)] px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-semibold">AI Math Tutor 🤖</h1>
@@ -185,10 +185,10 @@ export default function SolvePage() {
           </div>
         </div>
 
-        {/* Messages */}
+        {/* Messages - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.map(renderMessage)}
-          
+
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex gap-3">
@@ -204,12 +204,12 @@ export default function SolvePage() {
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="bg-background border-t border-[var(--card-border)] p-4">
+        {/* Input Area - Fixed */}
+        <div className="flex-shrink-0 bg-background border-t border-[var(--card-border)] p-4">
           <div className="flex gap-3">
             <div className="flex-1">
               <Textarea

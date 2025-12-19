@@ -104,10 +104,15 @@
   --background-secondary: #111111;
   --foreground: #fafafa;
   --foreground-secondary: #a1a1aa;
-  --card-bg: rgba(23, 23, 23, 0.8);
-  --card-border: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(17, 17, 17, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --card-bg: rgba(23, 23, 23, 0.9);
+  --card-border: rgba(255, 255, 255, 0.15);
+  --glass-bg: rgba(17, 17, 17, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.12);
+
+  /* Additional dark mode specific variables */
+  --input-bg: #1a1a1a;
+  --input-border: rgba(255, 255, 255, 0.15);
+  --hover-bg: rgba(255, 255, 255, 0.05);
 }
 
 /* Tailwind Theme Integration */
@@ -310,8 +315,13 @@ body {
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .glow-border-premium {
