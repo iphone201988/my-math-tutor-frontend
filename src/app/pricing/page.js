@@ -6,6 +6,7 @@ import Card, { CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { SUBSCRIPTION_TIERS } from '@/lib/constants';
+import { useState } from 'react';
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState('monthly');
