@@ -108,11 +108,10 @@ export default function DashboardPage() {
                     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
                       <div
                         key={day}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${
-                          i <= 4
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-neutral-200 dark:bg-neutral-700 text-foreground-secondary'
-                        }`}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${i <= 4
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-neutral-200 dark:bg-neutral-700 text-foreground-secondary'
+                          }`}
                         title={day}
                       >
                         {day[0]}
@@ -138,17 +137,17 @@ export default function DashboardPage() {
                   <Link
                     key={topic.id}
                     href={`/topics/${topic.id}`}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    className="flex items-center gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 hover:bg-primary-50 dark:hover:bg-neutral-700 hover:shadow-md transition-all"
                   >
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl">
                       {topic.icon}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{topic.title}</h3>
+                        <h3 className="font-semibold text-neutral-900 dark:text-white">{topic.title}</h3>
                         <Badge variant="primary">{Math.round(topic.progress * 100)}%</Badge>
                       </div>
-                      <p className="text-sm text-foreground-secondary">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         {topic.lessonsCount} lessons • {formatDuration(topic.duration)}
                       </p>
                     </div>
@@ -203,15 +202,14 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                      activity.type === 'lesson_completed' ? 'bg-green-100 dark:bg-green-900/30' :
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${activity.type === 'lesson_completed' ? 'bg-green-100 dark:bg-green-900/30' :
                       activity.type === 'problem_solved' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                      activity.type === 'streak_milestone' ? 'bg-orange-100 dark:bg-orange-900/30' :
-                      'bg-purple-100 dark:bg-purple-900/30'
-                    }`}>
+                        activity.type === 'streak_milestone' ? 'bg-orange-100 dark:bg-orange-900/30' :
+                          'bg-purple-100 dark:bg-purple-900/30'
+                      }`}>
                       {activity.type === 'lesson_completed' ? '✓' :
-                       activity.type === 'problem_solved' ? '🧮' :
-                       activity.type === 'streak_milestone' ? '🔥' : '🏆'}
+                        activity.type === 'problem_solved' ? '🧮' :
+                          activity.type === 'streak_milestone' ? '🔥' : '🏆'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{activity.title}</p>

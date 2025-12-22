@@ -53,7 +53,7 @@ export default function Sidebar() {
                 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
                 isActive
                   ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                  : 'text-foreground-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-foreground'
+                  : 'text-foreground-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white'
               )}
             >
               <span className="text-lg">{item.icon}</span>
@@ -94,7 +94,7 @@ export default function Sidebar() {
                 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
                 isActive
                   ? 'bg-primary-500 text-white'
-                  : 'text-foreground-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-foreground'
+                  : 'text-foreground-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white'
               )}
             >
               <span className="text-lg">{item.icon}</span>
@@ -108,7 +108,7 @@ export default function Sidebar() {
       <div className="px-4 pb-2">
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-foreground transition-all"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white transition-all"
           title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
         >
           <span className="text-lg">{resolvedTheme === 'dark' ? '☀️' : '🌙'}</span>

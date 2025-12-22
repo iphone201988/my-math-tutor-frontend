@@ -57,12 +57,12 @@
   --background: #ffffff;
   --background-secondary: #f8fafc;
   --foreground: #0f172a;
-  --foreground-secondary: #475569;
-  --card-bg: rgba(255, 255, 255, 0.8);
+  --foreground-secondary: #374151;
+  --card-bg: rgba(255, 255, 255, 0.95);
   --card-border: rgba(0, 0, 0, 0.1);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-primary: linear-gradient(135deg, #5b4dc7 0%, #6d28d9 100%);
   --gradient-secondary: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%);
   --gradient-hero: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
   --gradient-mesh: radial-gradient(at 40% 20%, rgba(120, 80, 220, 0.3) 0%, transparent 50%),
@@ -222,6 +222,7 @@ body {
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
+  color: var(--foreground);
 }
 
 .glass-card-strong {
@@ -450,6 +451,7 @@ body {
   border-radius: var(--radius-xl);
   padding: 1.5rem;
   transition: all var(--transition-base);
+  color: var(--foreground);
 }
 
 .card-interactive {
@@ -661,9 +663,11 @@ body {
     transform: scale(0);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.2);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -676,13 +680,24 @@ body {
 
 /* Shake Animation */
 @keyframes shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-5px);
   }
-  20%, 40%, 60%, 80% {
+
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(5px);
   }
 }
