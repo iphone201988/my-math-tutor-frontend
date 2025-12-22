@@ -59,7 +59,7 @@ export const SUBSCRIPTION_TIERS = {
   PREMIUM: {
     id: 'premium',
     name: 'Premium',
-    price: 499, // INR/month
+    price: 9, // USD/month
     features: [
       'Unlimited AI tutoring',
       'All topics & lessons',
@@ -72,7 +72,7 @@ export const SUBSCRIPTION_TIERS = {
   FAMILY: {
     id: 'family',
     name: 'Family',
-    price: 999, // INR/month
+    price: 19, // USD/month
     features: [
       'Everything in Premium',
       'Up to 5 family members',

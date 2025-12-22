@@ -1,32 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
+import { useForgotPasswordMutation } from '@/store/authApi';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState('');
+
+    // RTK Query mutation hook
+    const [forgotPassword, { isLoading, isSuccess, isError, error: apiError }] = useForgotPasswordMutation();
+
+    // Handle API errors
+    useEffect(() => {
+        if (isError && apiError) {
+            const errorMessage = apiError?.data?.error?.message 
+                || apiError?.data?.message 
+                || 'Failed to send reset email. Please try again.';
+            setError(errorMessage);
+        }
+    }, [isError, apiError]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Success
-        setSubmitted(true);
-        setLoading(false);
+        try {
+            await forgotPassword({ email }).unwrap();
+        } catch (err) {
+            console.error('Forgot password error:', err);
+        }
     };
 
-    if (submitted) {
+    // Show success state
+    if (isSuccess) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4 gradient-bg-mesh">
                 {/* Background decorations */}
@@ -46,27 +57,21 @@ export default function ForgotPasswordPage() {
 
                     {/* Success Card */}
                     <Card variant="glassStrong" className="p-8 text-center">
-                        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/20 flex items-center justify-center">
-                            <svg className="w-10 h-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/20 flex items-center justify-center animate-bounce-in">
+                            <span className="text-4xl">✉️</span>
                         </div>
                         
-                        <h1 className="text-2xl font-bold mb-3">Check your email 📧</h1>
+                        <h1 className="text-2xl font-bold mb-3">Check your email! 📧</h1>
                         <p className="text-foreground-secondary mb-2">
                             We've sent password reset instructions to
                         </p>
-                        <p className="font-bold text-primary-600 mb-8">{email}</p>
+                        <p className="font-bold text-primary-600 mb-6">{email || 'your email'}</p>
                         
-                        <p className="text-sm text-foreground-secondary mb-8">
-                            Didn't receive the email? Check your spam folder or{' '}
-                            <button 
-                                onClick={() => setSubmitted(false)} 
-                                className="text-primary-600 hover:text-primary-500 font-medium"
-                            >
-                                try again
-                            </button>
-                        </p>
+                        <div className="mb-6 p-4 rounded-xl bg-primary-50/50 dark:bg-primary-950/30 border border-primary-200/50 dark:border-primary-800/50">
+                            <p className="text-sm text-foreground-secondary">
+                                <span className="font-bold text-foreground">💡 Tip:</span> Check your spam folder if you don't see the email within a few minutes!
+                            </p>
+                        </div>
 
                         <Link href="/login">
                             <Button variant="primary" className="w-full" size="lg">
@@ -129,6 +134,7 @@ export default function ForgotPasswordPage() {
                         <Input
                             label="Email address"
                             type="email"
+                            name="email"
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -140,7 +146,7 @@ export default function ForgotPasswordPage() {
                             type="submit"
                             className="w-full"
                             size="lg"
-                            loading={loading}
+                            loading={isLoading}
                         >
                             Send Reset Link
                         </Button>

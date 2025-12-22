@@ -116,7 +116,7 @@ export default function PricingPage() {
                                                 <div className="mt-6 flex flex-col items-center gap-1">
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-6xl font-black tracking-tighter transition-all duration-500">
-                                                            ₹{calculatePrice(tier.price)}
+                                                            ${calculatePrice(tier.price)}
                                                         </span>
                                                         {tier.price > 0 && (
                                                             <span className="text-foreground-secondary text-lg font-bold">/mo</span>

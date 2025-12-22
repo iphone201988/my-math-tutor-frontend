@@ -204,7 +204,7 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <Badge variant="primary">Current Plan</Badge>
                       <h3 className="text-xl font-bold mt-1">Premium</h3>
-                      <p className="text-foreground-secondary text-sm">₹499/month</p>
+                      <p className="text-foreground-secondary text-sm">$9/month</p>
                     </div>
                     <Button variant="secondary">Manage</Button>
                   </div>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                     <CardContent className="py-6">
                       <h3 className="text-xl font-bold">{tier.name}</h3>
                       <div className="mt-2 mb-4">
-                        <span className="text-3xl font-bold">₹{tier.price}</span>
+                        <span className="text-3xl font-bold">${tier.price}</span>
                         {tier.price > 0 && <span className="text-foreground-secondary">/month</span>}
                       </div>
                       <ul className="space-y-2 mb-6">

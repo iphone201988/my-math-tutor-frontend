@@ -1,42 +1,87 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
 import { gradeBands } from '@/data/topics';
+import { useSignupMutation } from '@/store/authApi';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
+  // Store form data from step 1
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    gradeBand: '',
-    grade: ''
   });
-  const [loading, setLoading] = useState(false);
+  
+  const [gradeBand, setGradeBand] = useState('');
+  const [grade, setGrade] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (step === 1) {
-      setStep(2);
-      return;
-    }
-
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    window.location.href = '/dashboard';
-  };
+  // RTK Query mutation hook
+  const [signup, { isLoading, isSuccess, isError, error: apiError }] = useSignupMutation();
 
   const gradeOptions = {
     primary: ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade'],
     secondary: ['6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade'],
     college: ['11th Grade', '12th Grade', 'Undergraduate', 'Graduate']
+  };
+
+  // Handle API errors
+  useEffect(() => {
+    if (isError && apiError) {
+      const errorMessage = apiError?.data?.error?.message 
+        || apiError?.data?.message 
+        || 'Registration failed. Please try again.';
+      setError(errorMessage);
+    }
+  }, [isError, apiError]);
+
+  // Handle success
+  useEffect(() => {
+    if (isSuccess) {
+      setSuccess('Account created! Please check your email to verify your account.');
+      setTimeout(() => {
+        router.push('/login?registered=true');
+      }, 2000);
+    }
+  }, [isSuccess, router]);
+
+  // Handle step 1 form submission
+  const handleStep1Submit = (e) => {
+    e.preventDefault();
+    const form = e.target;
+    setFormData({
+      firstName: form.firstName.value,
+      lastName: form.lastName.value,
+      email: form.email.value,
+      password: form.password.value,
+    });
+    setStep(2);
+  };
+
+  // Handle step 2 form submission
+  const handleStep2Submit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      await signup({
+        ...formData,
+        deviceType: 'web',
+      }).unwrap();
+    } catch (err) {
+      console.error('Registration error:', err);
+    }
   };
 
   return (
@@ -65,6 +110,20 @@ export default function RegisterPage() {
 
         {/* Register Card */}
         <Card variant="glassStrong" className="p-8">
+          {/* Success message */}
+          {success && (
+            <div className="mb-6 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+              {success}
+            </div>
+          )}
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-6 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
+              {error}
+            </div>
+          )}
+
           {step === 1 ? (
             <>
               <div className="text-center mb-8">
@@ -74,22 +133,22 @@ export default function RegisterPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleStep1Submit} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="First Name"
                     type="text"
+                    name="firstName"
                     placeholder="John"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    defaultValue={formData.firstName}
                     required
                   />
                   <Input
                     label="Last Name"
                     type="text"
+                    name="lastName"
                     placeholder="Doe"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    defaultValue={formData.lastName}
                     required
                   />
                 </div>
@@ -97,9 +156,9 @@ export default function RegisterPage() {
                 <Input
                   label="Email"
                   type="email"
+                  name="email"
                   placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  defaultValue={formData.email}
                   required
                   icon={<span>📧</span>}
                 />
@@ -107,10 +166,11 @@ export default function RegisterPage() {
                 <Input
                   label="Password"
                   type="password"
-                  placeholder="Create a strong password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  name="password"
+                  placeholder="Create a strong password (8+ chars)"
+                  defaultValue={formData.password}
                   required
+                  minLength={8}
                   icon={<span>🔒</span>}
                 />
 
@@ -129,7 +189,7 @@ export default function RegisterPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleStep2Submit} className="space-y-6">
                 {/* Grade Band Selection */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium">What level are you studying?</label>
@@ -138,9 +198,9 @@ export default function RegisterPage() {
                       <button
                         key={band.id}
                         type="button"
-                        onClick={() => setFormData({ ...formData, gradeBand: band.id, grade: '' })}
+                        onClick={() => { setGradeBand(band.id); setGrade(''); }}
                         className={`p-4 rounded-xl border-2 text-left transition-all ${
-                          formData.gradeBand === band.id
+                          gradeBand === band.id
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-950'
                             : 'border-[var(--card-border)] hover:border-primary-300'
                         }`}
@@ -160,22 +220,22 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Specific Grade Selection */}
-                {formData.gradeBand && (
+                {gradeBand && (
                   <div className="space-y-3 animate-fade-in">
                     <label className="text-sm font-medium">Select your specific grade</label>
                     <div className="flex flex-wrap gap-2">
-                      {gradeOptions[formData.gradeBand]?.map((grade) => (
+                      {gradeOptions[gradeBand]?.map((g) => (
                         <button
-                          key={grade}
+                          key={g}
                           type="button"
-                          onClick={() => setFormData({ ...formData, grade })}
+                          onClick={() => setGrade(g)}
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            formData.grade === grade
+                            grade === g
                               ? 'bg-primary-500 text-white'
                               : 'bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                           }`}
                         >
-                          {grade}
+                          {g}
                         </button>
                       ))}
                     </div>
@@ -194,8 +254,8 @@ export default function RegisterPage() {
                   <Button 
                     type="submit" 
                     className="flex-1" 
-                    loading={loading}
-                    disabled={!formData.gradeBand || !formData.grade}
+                    loading={isLoading}
+                    disabled={!gradeBand || !grade}
                   >
                     Create Account
                   </Button>

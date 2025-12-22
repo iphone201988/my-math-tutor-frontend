@@ -1,30 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
+import { useSigninMutation } from '@/store/authApi';
 
 export default function LoginPage() {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-    });
-    const [loading, setLoading] = useState(false);
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [error, setError] = useState('');
+    const justRegistered = searchParams.get('registered') === 'true';
+    const passwordReset = searchParams.get('reset') === 'true';
+
+    // RTK Query mutation hook
+    const [signin, { isLoading, isSuccess, isError, error: apiError }] = useSigninMutation();
+
+    // Handle API errors
+    useEffect(() => {
+        if (isError && apiError) {
+            const errorMessage = apiError?.data?.error?.message
+                || apiError?.data?.message
+                || 'Login failed. Please try again.';
+            setError(errorMessage);
+        }
+    }, [isError, apiError]);
+
+    // Redirect on success
+    useEffect(() => {
+        if (isSuccess) {
+            router.push('/dashboard');
+        }
+    }, [isSuccess, router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
 
-        // Simulate login
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const formData = new FormData(e.target);
+        const email = formData.get('email');
+        const password = formData.get('password');
 
-        // Redirect to dashboard (in real app, this would authenticate)
-        window.location.href = '/dashboard';
+        try {
+            await signin({
+                email,
+                password,
+                deviceType: 'web',
+            }).unwrap();
+        } catch (err) {
+            // Error is handled by useEffect above
+            console.error('Login error:', err);
+        }
     };
 
     return (
@@ -53,6 +82,21 @@ export default function LoginPage() {
                         </p>
                     </div>
 
+                    {/* Success message for just registered users */}
+                    {justRegistered && (
+                        <div className="mb-6 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+                            Account created! Please check your email to verify your account before signing in.
+                        </div>
+                    )}
+
+                    {/* Success message for password reset */}
+                    {passwordReset && (
+                        <div className="mb-6 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+                            Password reset successful! You can now sign in with your new password.
+                        </div>
+                    )}
+
+                    {/* Error message */}
                     {error && (
                         <div className="mb-6 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
                             {error}
@@ -63,9 +107,8 @@ export default function LoginPage() {
                         <Input
                             label="Email"
                             type="email"
+                            name="email"
                             placeholder="you@example.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             required
                             icon={<span>📧</span>}
                         />
@@ -73,16 +116,15 @@ export default function LoginPage() {
                         <Input
                             label="Password"
                             type="password"
+                            name="password"
                             placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             required
                             icon={<span>🔒</span>}
                         />
 
                         <div className="flex items-center justify-between text-sm">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" className="rounded border-neutral-300" />
+                                <input type="checkbox" name="remember" className="rounded border-neutral-300" />
                                 <span className="text-foreground-secondary">Remember me</span>
                             </label>
                             <Link
@@ -97,7 +139,7 @@ export default function LoginPage() {
                             type="submit"
                             className="w-full"
                             size="lg"
-                            loading={loading}
+                            loading={isLoading}
                         >
                             Sign In
                         </Button>

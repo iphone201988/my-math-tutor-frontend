@@ -2,6 +2,7 @@ import { Urbanist, Exo_2 } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
+import ReduxProvider from "@/components/providers/ReduxProvider";
 
 // Urbanist for body text
 const urbanist = Urbanist({
@@ -39,10 +40,13 @@ export default function RootLayout({ children }) {
         className={`${urbanist.variable} ${exo2.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ReduxProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </ReduxProvider>
       </body>
     </html>
   );
 }
+
