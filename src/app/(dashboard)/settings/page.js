@@ -1,33 +1,114 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
-import { currentUser } from '@/data/users';
 import { LANGUAGES, SUBSCRIPTION_TIERS } from '@/lib/constants';
 import { getInitials } from '@/lib/utils';
-import { gradeBands } from '@/data/topics';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { useGetMeQuery, useUpdateProfileMutation } from '@/store/userApi';
+import { useSelector, useDispatch } from 'react-redux';
+import { setUser } from '@/store/authSlice';
+
+const LEVELS = [
+  { id: 'primary', label: 'Primary', grades: '1-5', icon: '⭐', defaultLevel: 1 },
+  { id: 'secondary', label: 'Secondary', grades: '6-10', icon: '🚀', defaultLevel: 6 },
+  { id: 'college', label: 'College', grades: '11+', icon: '🎓', defaultLevel: 11 },
+];
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [language, setLanguage] = useState(currentUser.languagePreference);
+  const { theme, setTheme } = useTheme();
+  const dispatch = useDispatch();
+
+  // Fetch user data from API
+  const { data: userData, isLoading } = useGetMeQuery();
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+
+  // Get user from API or fallback to Redux state
+  const reduxUser = useSelector((state) => state.auth.user);
+  const user = userData?.data || reduxUser;
+
+  // Local form state
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+  });
+  const [language, setLanguage] = useState('en');
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
     reminders: true,
-    marketing: false
+    marketing: false,
   });
-  const { theme, setTheme } = useTheme();
+  const [selectedLevel, setSelectedLevel] = useState(null);
+
+  // Initialize form state when user data is available
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+      });
+      setLanguage(user.languagePreference || 'en');
+      setNotifications(user.notificationSettings || {
+        email: true,
+        push: true,
+        reminders: true,
+        marketing: false,
+      });
+      setSelectedLevel(LEVELS.find(l => l.id === user.learnLevel) || null);
+    }
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const response = await updateProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+      }).unwrap();
+      if (response.success) {
+        dispatch(setUser(response.data));
+      }
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
+  };
+
+  const handleSaveLevel = async () => {
+    if (!selectedLevel) return;
+    try {
+      const response = await updateProfile({
+        learnLevel: selectedLevel.id,
+        level: selectedLevel.defaultLevel,
+      }).unwrap();
+      if (response.success) {
+        dispatch(setUser(response.data));
+      }
+    } catch (error) {
+      console.error('Failed to update learning level:', error);
+    }
+  };
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'preferences', label: 'Preferences', icon: '⚙️' },
     { id: 'subscription', label: 'Subscription', icon: '💎' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' }
+    { id: 'notifications', label: 'Notifications', icon: '🔔' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 lg:p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-foreground-secondary">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 space-y-8">
@@ -73,7 +154,7 @@ export default function SettingsPage() {
                   {/* Avatar */}
                   <div className="flex items-center gap-6">
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-2xl">
-                      {getInitials(currentUser.firstName, currentUser.lastName)}
+                      {getInitials(user?.firstName, user?.lastName)}
                     </div>
                     <div>
                       <Button variant="secondary" size="sm">Upload Photo</Button>
@@ -87,21 +168,26 @@ export default function SettingsPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <Input
                       label="First Name"
-                      defaultValue={currentUser.firstName}
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     />
                     <Input
                       label="Last Name"
-                      defaultValue={currentUser.lastName}
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     />
                     <Input
                       label="Email"
                       type="email"
-                      defaultValue={currentUser.email}
+                      value={user?.email || ''}
+                      disabled
                       className="md:col-span-2"
                     />
                   </div>
 
-                  <Button>Save Changes</Button>
+                  <Button onClick={handleSaveProfile} loading={isUpdating}>
+                    Save Changes
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -110,24 +196,27 @@ export default function SettingsPage() {
                   <CardTitle>Learning Level</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <p className="text-sm text-foreground-secondary">
+                    Your learning level is determined by your performance and cannot be changed manually.
+                  </p>
                   <div className="grid gap-3">
-                    {gradeBands.map((band) => (
+                    {LEVELS.map((level) => (
                       <div
-                        key={band.id}
-                        className={`p-4 rounded-xl border-2 ${currentUser.gradeBand === band.id
+                        key={level.id}
+                        className={`p-4 rounded-xl border-2 ${user?.learnLevel === level.id
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-950'
-                          : 'border-[var(--card-border)]'
+                          : 'border-[var(--card-border)] opacity-50'
                           }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl">{band.icon}</span>
+                          <span className="text-2xl">{level.icon}</span>
                           <div className="flex-1">
-                            <p className="font-semibold">{band.label}</p>
+                            <p className="font-semibold">{level.label}</p>
                             <p className="text-sm text-foreground-secondary">
-                              Grades {band.grades}
+                              Grades {level.grades}
                             </p>
                           </div>
-                          {currentUser.gradeBand === band.id && (
+                          {user?.learnLevel === level.id && (
                             <Badge variant="primary">Current</Badge>
                           )}
                         </div>
@@ -173,7 +262,7 @@ export default function SettingsPage() {
                     {[
                       { value: 'light', label: 'Light', icon: '☀️' },
                       { value: 'dark', label: 'Dark', icon: '🌙' },
-                      { value: 'system', label: 'System', icon: '💻' }
+                      { value: 'system', label: 'System', icon: '💻' },
                     ].map((themeOption) => (
                       <button
                         key={themeOption.value}
@@ -254,7 +343,7 @@ export default function SettingsPage() {
                   { key: 'email', label: 'Email Notifications', desc: 'Receive updates via email' },
                   { key: 'push', label: 'Push Notifications', desc: 'Get notified on your device' },
                   { key: 'reminders', label: 'Study Reminders', desc: 'Daily reminders to practice' },
-                  { key: 'marketing', label: 'Marketing', desc: 'News and promotional offers' }
+                  { key: 'marketing', label: 'Marketing', desc: 'News and promotional offers' },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
                     <div>
@@ -262,15 +351,31 @@ export default function SettingsPage() {
                       <p className="text-sm text-foreground-secondary">{item.desc}</p>
                     </div>
                     <button
-                      onClick={() => setNotifications(prev => ({
-                        ...prev,
-                        [item.key]: !prev[item.key]
-                      }))}
+                      onClick={async () => {
+                        const newSettings = {
+                          ...notifications,
+                          [item.key]: !notifications[item.key],
+                        };
+                        setNotifications(newSettings);
+                        try {
+                          const response = await updateProfile({
+                            notificationSettings: newSettings,
+                          }).unwrap();
+                          if (response.success) {
+                            dispatch(setUser(response.data));
+                          }
+                        } catch (error) {
+                          console.error('Failed to update notifications:', error);
+                          // Revert on error
+                          setNotifications(notifications);
+                        }
+                      }}
+                      disabled={isUpdating}
                       className={`w-12 h-6 rounded-full transition-colors relative ${notifications[item.key] ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-600'
-                        }`}
+                        } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <span
-                        className={`absolute top-1 w-4 h-4 bg-primary-500 rounded-full transition-transform ${notifications[item.key] ? 'translate-x-7' : 'translate-x-1'
+                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${notifications[item.key] ? 'translate-x-7' : 'translate-x-1'
                           }`}
                       />
                     </button>

@@ -28,7 +28,7 @@ export default function Hero() {
       {/* Background */}
       <div className="absolute inset-0 gradient-bg-hero" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.15)_0%,_transparent_70%)]" />
-      
+
       {/* Floating Math Equations */}
       {mounted && floatingEquations.map((eq, i) => (
         <div
@@ -47,7 +47,7 @@ export default function Hero() {
       ))}
 
       {/* Grid Pattern */}
-      <div 
+      <div
         className="absolute inset-0 opacity-10"
         style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
@@ -74,7 +74,7 @@ export default function Hero() {
 
           {/* Subheading */}
           <p className="text-lg md:text-xl text-white/70 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Snap a problem, get personalized hints, and learn step-by-step with our 
+            Snap a problem, get personalized hints, and learn step-by-step with our
             Socratic AI tutor. From basic arithmetic to advanced calculus.
           </p>
 
@@ -127,7 +127,7 @@ export default function Hero() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Demo Content */}
               <div className="bg-neutral-800 rounded-lg p-4">
                 <div className="flex gap-4">
