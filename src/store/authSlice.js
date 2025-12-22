@@ -6,6 +6,7 @@
 
 import { createSlice } from '@reduxjs/toolkit';
 import { authApi } from './authApi';
+import { userApi } from './userApi';
 
 // Initial state
 const initialState = {
@@ -26,7 +27,7 @@ const authSlice = createSlice({
       if (typeof window !== 'undefined') {
         const userStr = localStorage.getItem('user');
         const token = localStorage.getItem('accessToken');
-        
+
         if (userStr && token) {
           try {
             state.user = JSON.parse(userStr);
@@ -39,19 +40,19 @@ const authSlice = createSlice({
       }
       state.isLoading = false;
     },
-    
+
     // Logout
     logout: (state) => {
       state.user = null;
       state.isAuthenticated = false;
-      
+
       if (typeof window !== 'undefined') {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
       }
     },
-    
+
     // Set user
     setUser: (state, action) => {
       state.user = action.payload;
@@ -65,6 +66,29 @@ const authSlice = createSlice({
       (state, { payload }) => {
         if (payload.success && payload.data?.user) {
           state.user = payload.data.user;
+          state.isAuthenticated = true;
+        }
+      }
+    );
+
+
+    // Handle profile fetch
+    builder.addMatcher(
+      userApi.endpoints.getMe.matchFulfilled,
+      (state, { payload }) => {
+        if (payload.success && payload.data) {
+          state.user = payload.data;
+          state.isAuthenticated = true;
+        }
+      }
+    );
+
+    // Handle profile update
+    builder.addMatcher(
+      userApi.endpoints.updateProfile.matchFulfilled,
+      (state, { payload }) => {
+        if (payload.success && payload.data) {
+          state.user = payload.data;
           state.isAuthenticated = true;
         }
       }

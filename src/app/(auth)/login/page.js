@@ -50,9 +50,11 @@ export default function LoginPage() {
                 password,
                 deviceType: 'web',
             }).unwrap();
+            
+            // Redirect happens in useEffect upon isSuccess
         } catch (err) {
-            // Error is handled by useEffect above
-            console.error('Login error:', err);
+            console.error('Login error details:', err);
+            // Specific error message extraction if needed, though useEffect handles it
         }
     };
 

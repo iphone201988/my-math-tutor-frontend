@@ -35,7 +35,7 @@ export const authApi = createApi({
         /**
          * User signup (registration)
          * POST /auth/signup
-         */     
+         */
         signup: builder.mutation({
             query: (credentials) => ({
                 url: '/signup',
@@ -59,7 +59,9 @@ export const authApi = createApi({
                 try {
                     const { data } = await queryFulfilled;
                     if (data.success && data.data) {
-                        const { accessToken, refreshToken, user } = data.data;
+                        const { user, tokens } = data.data;
+                        const { accessToken, refreshToken } = tokens || {};
+
                         if (typeof window !== 'undefined') {
                             if (accessToken) localStorage.setItem('accessToken', accessToken);
                             if (refreshToken) localStorage.setItem('refreshToken', refreshToken);

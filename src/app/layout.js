@@ -3,6 +3,7 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 // Urbanist for body text
 const urbanist = Urbanist({
@@ -41,9 +42,11 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <ReduxProvider>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              {children}
+            </ThemeProvider>
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>
