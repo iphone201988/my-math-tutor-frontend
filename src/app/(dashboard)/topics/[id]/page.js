@@ -166,10 +166,10 @@ export default function TopicDetailPage() {
                                 <CardContent className="flex items-center gap-6 p-6">
                                     {/* Lesson Number */}
                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 transition-all ${lesson.completed
-                                            ? 'bg-success/20 text-success'
-                                            : lesson.locked
-                                                ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400'
-                                                : 'bg-primary-500/20 text-primary-600 group-hover:scale-110'
+                                        ? 'bg-success/20 text-success'
+                                        : lesson.locked
+                                            ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400'
+                                            : 'bg-primary-500/20 text-primary-600 group-hover:scale-110'
                                         }`}>
                                         {lesson.completed ? '✓' : lesson.locked ? '🔒' : index + 1}
                                     </div>
@@ -198,7 +198,7 @@ export default function TopicDetailPage() {
 
                                     {/* Action Button */}
                                     {!lesson.locked && (
-                                        <Link href={`/solve?topic=${topic.id}&lesson=${lesson.id}`}>
+                                        <Link href={`/topics/${topic.id}/lesson/${lesson.id}`}>
                                             <Button
                                                 variant={lesson.completed ? 'secondary' : 'primary'}
                                                 className="font-bold"
