@@ -7,10 +7,12 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
 import { useForgotPasswordMutation } from '@/store/authApi';
+import { useToast } from '@/components/providers/ToastProvider';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
+    const toast = useToast();
 
     // RTK Query mutation hook
     const [forgotPassword, { isLoading, isSuccess, isError, error: apiError }] = useForgotPasswordMutation();
@@ -22,8 +24,16 @@ export default function ForgotPasswordPage() {
                 || apiError?.data?.message 
                 || 'Failed to send reset email. Please try again.';
             setError(errorMessage);
+            toast.error(errorMessage);
         }
     }, [isError, apiError]);
+
+    // Show success toast
+    useEffect(() => {
+        if (isSuccess) {
+            toast.success('📧 Password reset email sent! Check your inbox.');
+        }
+    }, [isSuccess]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

@@ -8,11 +8,12 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
 import { useSignupMutation } from '@/store/authApi';
+import { useToast } from '@/components/providers/ToastProvider';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const toast = useToast();
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // RTK Query mutation hook
   const [signup, { isLoading, isSuccess, isError, error: apiError }] = useSignupMutation();
@@ -24,13 +25,14 @@ export default function RegisterPage() {
         || apiError?.data?.message
         || 'Registration failed. Please try again.';
       setError(errorMessage);
+      toast.error(errorMessage);
     }
   }, [isError, apiError]);
 
   // Handle success
   useEffect(() => {
     if (isSuccess) {
-      setSuccess('Account created! Please check your email to verify your account.');
+      toast.success('🎉 Account created! Please check your email to verify your account.');
       setTimeout(() => {
         router.push('/login?registered=true');
       }, 2000);
@@ -58,7 +60,7 @@ export default function RegisterPage() {
         || err?.message
         || 'Registration failed. Please try again.';
       setError(errorMessage);
-      console.error('Registration error:', err);
+      toast.error(errorMessage);
     }
   };
 

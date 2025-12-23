@@ -3,6 +3,7 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import AuthProvider from "@/components/providers/AuthProvider";
+import ToastProvider from "@/components/providers/ToastProvider";
 
 // Urbanist for body text
 const urbanist = Urbanist({
@@ -42,7 +43,9 @@ export default function RootLayout({ children }) {
       >
         <ReduxProvider>
           <AuthProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </AuthProvider>
         </ReduxProvider>
       </body>

@@ -8,16 +8,28 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
 import { useSigninMutation } from '@/store/authApi';
+import { useToast } from '@/components/providers/ToastProvider';
 
 export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const toast = useToast();
     const [error, setError] = useState('');
     const justRegistered = searchParams.get('registered') === 'true';
     const passwordReset = searchParams.get('reset') === 'true';
 
     // RTK Query mutation hook
     const [signin, { isLoading, isSuccess, isError, error: apiError }] = useSigninMutation();
+
+    // Show toast for URL params on mount
+    useEffect(() => {
+        if (justRegistered) {
+            toast.success('Account created! Please check your email to verify your account before signing in.');
+        }
+        if (passwordReset) {
+            toast.success('Password reset successful! You can now sign in with your new password.');
+        }
+    }, []);
 
     // Handle API errors
     useEffect(() => {
@@ -26,13 +38,17 @@ export default function LoginPage() {
                 || apiError?.data?.message
                 || 'Login failed. Please try again.';
             setError(errorMessage);
+            toast.error(errorMessage);
         }
     }, [isError, apiError]);
 
     // Redirect on success
     useEffect(() => {
         if (isSuccess) {
-            router.push('/dashboard');
+            toast.success('Welcome back! Redirecting to dashboard...');
+            setTimeout(() => {
+                router.push('/dashboard');
+            }, 1000);
         }
     }, [isSuccess, router]);
 
@@ -50,11 +66,8 @@ export default function LoginPage() {
                 password,
                 deviceType: 'web',
             }).unwrap();
-            
-            // Redirect happens in useEffect upon isSuccess
         } catch (err) {
             console.error('Login error details:', err);
-            // Specific error message extraction if needed, though useEffect handles it
         }
     };
 
