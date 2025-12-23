@@ -28,7 +28,7 @@ export default function ThemeProvider({ children }) {
     setMounted(true);
   }, []);
 
-  // Update resolved theme and apply to document
+  // Update resolved theme
   useEffect(() => {
     if (!mounted) return;
 
@@ -41,7 +41,6 @@ export default function ThemeProvider({ children }) {
       }
       
       setResolvedTheme(newResolvedTheme);
-      document.documentElement.setAttribute('data-theme', newResolvedTheme);
     };
 
     updateTheme();
@@ -71,7 +70,9 @@ export default function ThemeProvider({ children }) {
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme: handleSetTheme }}>
-      {children}
+      <div id="dashboard-theme-container" data-theme={resolvedTheme}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }

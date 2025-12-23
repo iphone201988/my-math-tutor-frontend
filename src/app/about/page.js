@@ -47,7 +47,7 @@ export default function AboutPage() {
     ];
 
     return (
-        <>
+        <div data-theme="dark" className="min-h-screen">
             <Header />
             <div className="min-h-screen">
                 {/* Hero Section */}
@@ -215,6 +215,6 @@ export default function AboutPage() {
                 </section>
             </div>
             <Footer />
-        </>
+        </div>
     );
 }

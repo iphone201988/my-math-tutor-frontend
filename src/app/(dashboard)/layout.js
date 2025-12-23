@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import MobileNav from '@/components/layout/MobileNav';
 import LearningLevelModal from '@/components/modals/LearningLevelModal';
+import ThemeProvider from '@/components/providers/ThemeProvider';
 import { useGetMeQuery } from '@/store/userApi';
 import { logout } from '@/store/authSlice';
 
@@ -68,23 +69,25 @@ export default function DashboardLayout({ children }) {
     }
 
     return (
-        <div className="fixed inset-0 bg-background-secondary text-foreground">
-            {/* Desktop Sidebar - Fixed */}
-            <div className="hidden lg:block">
-                <Sidebar />
+        <ThemeProvider>
+            <div className="fixed inset-0 bg-background-secondary text-foreground">
+                {/* Desktop Sidebar - Fixed */}
+                <div className="hidden lg:block">
+                    <Sidebar />
+                </div>
+
+                {/* Main Content - Scrollable */}
+                <main className="fixed inset-0 lg:left-64 overflow-y-auto pb-20 lg:pb-0">
+                    {children}
+                </main>
+
+                {/* Mobile Navigation */}
+                <MobileNav />
+
+                {/* Mandatory Learning Level Selection */}
+                <LearningLevelModal isOpen={showLearningLevelModal} user={user} />
             </div>
-
-            {/* Main Content - Scrollable */}
-            <main className="fixed inset-0 lg:left-64 overflow-y-auto pb-20 lg:pb-0">
-                {children}
-            </main>
-
-            {/* Mobile Navigation */}
-            <MobileNav />
-
-            {/* Mandatory Learning Level Selection */}
-            <LearningLevelModal isOpen={showLearningLevelModal} user={user} />
-        </div>
+        </ThemeProvider>
     );
 }
 

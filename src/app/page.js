@@ -8,7 +8,7 @@ import CTA from '@/components/landing/CTA';
 
 export default function Home() {
   return (
-    <>
+    <div data-theme="dark" className="min-h-screen">
       <Header />
       <main>
         <Hero />
@@ -18,6 +18,6 @@ export default function Home() {
         <CTA />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

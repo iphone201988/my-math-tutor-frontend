@@ -37,7 +37,7 @@ export default function PricingPage() {
     ];
 
     return (
-        <>
+        <div data-theme="dark">
             <Header />
             <main className="pt-24 pb-20 overflow-x-hidden">
                 {/* Animated Background Mesh */}
@@ -202,6 +202,6 @@ export default function PricingPage() {
                 </section>
             </main>
             <Footer />
-        </>
+        </div>
     );
 }

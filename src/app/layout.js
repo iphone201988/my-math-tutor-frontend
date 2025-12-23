@@ -1,7 +1,6 @@
 import { Urbanist, Exo_2 } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
-import ThemeProvider from "@/components/providers/ThemeProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import AuthProvider from "@/components/providers/AuthProvider";
 
@@ -43,9 +42,7 @@ export default function RootLayout({ children }) {
       >
         <ReduxProvider>
           <AuthProvider>
-            <ThemeProvider>
-              {children}
-            </ThemeProvider>
+            {children}
           </AuthProvider>
         </ReduxProvider>
       </body>
