@@ -83,13 +83,6 @@ export default function RegisterPage() {
 
         {/* Register Card */}
         <Card variant="glassStrong" className="p-8">
-          {/* Success message */}
-          {success && (
-            <div className="mb-6 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
-              {success}
-            </div>
-          )}
-
           {/* Error message */}
           {error && (
             <div className="mb-6 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
