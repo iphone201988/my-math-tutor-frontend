@@ -26,7 +26,7 @@ const bottomNavItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
-  
+
   // Get actual user data from Redux
   const user = useSelector((state) => state.auth.user);
 
