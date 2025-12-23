@@ -113,7 +113,7 @@ export default function AboutPage() {
                             <p className="text-lg text-foreground-secondary leading-relaxed">
                                 We believe that every student deserves access to world-class mathematics education.
                                 Our AI-powered platform breaks down complex concepts into digestible lessons,
-                                provides instant feedback, and adapts to each learner's unique needs—making math
+                                provides instant feedback, and adapts to each learner&apos;s unique needs—making math
                                 mastery achievable for everyone.
                             </p>
                         </div>

@@ -63,13 +63,13 @@ export default function ForgotPasswordPage() {
                         
                         <h1 className="text-2xl font-bold mb-3">Check your email! 📧</h1>
                         <p className="text-foreground-secondary mb-2">
-                            We've sent password reset instructions to
+                            We&apos;ve sent password reset instructions to
                         </p>
                         <p className="font-bold text-primary-600 mb-6">{email || 'your email'}</p>
                         
                         <div className="mb-6 p-4 rounded-xl bg-primary-50/50 dark:bg-primary-950/30 border border-primary-200/50 dark:border-primary-800/50">
                             <p className="text-sm text-foreground-secondary">
-                                <span className="font-bold text-foreground">💡 Tip:</span> Check your spam folder if you don't see the email within a few minutes!
+                                <span className="font-bold text-foreground">💡 Tip:</span> Check your spam folder if you don&apos;t see the email within a few minutes!
                             </p>
                         </div>
 
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
                         </div>
                         <h1 className="text-2xl font-bold mb-2 text-center">Forgot your password?</h1>
                         <p className="text-foreground-secondary text-center text-sm">
-                            No worries! Enter your email and we'll send you reset instructions.
+                            No worries! Enter your email and we&apos;ll send you reset instructions.
                         </p>
                     </div>
 
@@ -155,7 +155,7 @@ export default function ForgotPasswordPage() {
                     {/* Help text */}
                     <div className="mt-8 p-4 rounded-xl bg-primary-50/50 dark:bg-primary-950/30 border border-primary-200/50 dark:border-primary-800/50">
                         <p className="text-sm text-foreground-secondary text-center">
-                            <span className="font-bold text-foreground">💡 Tip:</span> Remember to check your spam folder if you don't see the email within a few minutes!
+                            <span className="font-bold text-foreground">💡 Tip:</span> Remember to check your spam folder if you don&apos;t see the email within a few minutes!
                         </p>
                     </div>
                 </Card>

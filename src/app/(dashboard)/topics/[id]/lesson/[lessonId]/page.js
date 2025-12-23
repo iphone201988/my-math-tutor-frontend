@@ -38,7 +38,7 @@ export default function LessonPage() {
                 <div className="text-center py-20">
                     <div className="text-6xl mb-4">❌</div>
                     <h2 className="text-2xl font-bold mb-2 text-neutral-900 dark:text-white">Lesson Not Found</h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 mb-6">The lesson you're looking for doesn't exist.</p>
+                    <p className="text-neutral-600 dark:text-neutral-400 mb-6">The lesson you&apos;re looking for doesn&apos;t exist.</p>
                     <Link href={`/topics/${params.id}`}>
                         <Button>Back to Topic</Button>
                     </Link>
@@ -159,7 +159,7 @@ export default function LessonPage() {
                                         <div className="text-5xl mb-4">📝</div>
                                         <h3 className="text-xl font-bold mb-2 text-neutral-900 dark:text-white">Content Coming Soon</h3>
                                         <p className="text-neutral-600 dark:text-neutral-400">
-                                            We're working on adding detailed content for this lesson.
+                                            We&apos;re working on adding detailed content for this lesson.
                                         </p>
                                     </div>
                                 )}
@@ -213,7 +213,7 @@ export default function LessonPage() {
                                         <div className="text-5xl mb-4">💡</div>
                                         <h3 className="text-xl font-bold mb-2 text-neutral-900 dark:text-white">Examples Coming Soon</h3>
                                         <p className="text-neutral-600 dark:text-neutral-400">
-                                            We're working on adding examples for this lesson.
+                                            We&apos;re working on adding examples for this lesson.
                                         </p>
                                     </div>
                                 )}
@@ -291,7 +291,7 @@ export default function LessonPage() {
                                         <div className="text-5xl mb-4">✏️</div>
                                         <h3 className="text-xl font-bold mb-2 text-neutral-900 dark:text-white">Practice Problems Coming Soon</h3>
                                         <p className="text-neutral-600 dark:text-neutral-400">
-                                            We're working on adding practice problems for this lesson.
+                                            We&apos;re working on adding practice problems for this lesson.
                                         </p>
                                     </div>
                                 )}
@@ -313,7 +313,7 @@ export default function LessonPage() {
                             <div className="text-6xl mb-4 animate-bounce-in">🎉</div>
                             <h2 className="text-2xl font-bold mb-2 text-neutral-900 dark:text-white">Lesson Complete!</h2>
                             <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                                Great job! You've mastered this lesson.
+                                Great job! You&apos;ve mastered this lesson.
                             </p>
                             <div className="flex justify-center gap-4">
                                 {nextLesson && !nextLesson.locked && (

@@ -20,7 +20,7 @@ export default function TopicDetailPage() {
                 <div className="text-center py-20">
                     <div className="text-6xl mb-4">❌</div>
                     <h2 className="text-2xl font-bold mb-2">Topic Not Found</h2>
-                    <p className="text-foreground-secondary mb-6">The topic you're looking for doesn't exist.</p>
+                    <p className="text-foreground-secondary mb-6">The topic you&apos;re looking for doesn&apos;t exist.</p>
                     <Link href="/topics">
                         <Button>Back to Topics</Button>
                     </Link>
@@ -216,7 +216,7 @@ export default function TopicDetailPage() {
                         <div className="text-5xl mb-4">📝</div>
                         <h3 className="text-xl font-bold mb-2">Lessons Coming Soon</h3>
                         <p className="text-foreground-secondary">
-                            We're working on creating engaging lessons for this topic. Check back soon!
+                            We&apos;re working on creating engaging lessons for this topic. Check back soon!
                         </p>
                     </Card>
                 )}
