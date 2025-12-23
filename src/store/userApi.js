@@ -16,7 +16,7 @@ export const userApi = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
     baseUrl: `${API_BASE_URL}/users`,
-    prepareHeaders: (headers) => {
+    prepareHeaders: (headers, { endpoint }) => {
       // Get token from localStorage
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
@@ -24,7 +24,10 @@ export const userApi = createApi({
           headers.set('authorization', `Bearer ${token}`);
         }
       }
-      headers.set('Content-Type', 'application/json');
+      // Don't set Content-Type for file uploads - browser will set it with boundary
+      if (endpoint !== 'updateProfile') {
+        headers.set('Content-Type', 'application/json');
+      }
       return headers;
     },
   }),
@@ -40,15 +43,32 @@ export const userApi = createApi({
     }),
 
     /**
-     * Update user profile
+     * Update user profile (with optional file upload)
      * PATCH /users/me
      */
     updateProfile: builder.mutation({
-      query: (data) => ({
-        url: '/me',
-        method: 'PATCH',
-        body: data,
-      }),
+      query: (data) => {
+        // If data is already FormData, use it directly
+        // Otherwise, create FormData from the object
+        let body;
+        if (data instanceof FormData) {
+          body = data;
+        } else {
+          body = new FormData();
+          Object.keys(data).forEach(key => {
+            if (data[key] !== undefined && data[key] !== null) {
+              body.append(key, data[key]);
+            }
+          });
+        }
+        return {
+          url: '/me',
+          method: 'PATCH',
+          body,
+          // Don't convert to JSON for file uploads
+          formData: true,
+        };
+      },
       invalidatesTags: ['User'],
       // Update the user in localStorage and potentially state
       async onQueryStarted(arg, { queryFulfilled }) {

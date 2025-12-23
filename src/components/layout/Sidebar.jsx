@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { APP_NAME } from '@/lib/constants';
-import { currentUser, userStats } from '@/data/users';
-import { getInitials } from '@/lib/utils';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { useSelector } from 'react-redux';
+
+const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -24,10 +26,32 @@ const bottomNavItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
+  
+  // Get actual user data from Redux
+  const user = useSelector((state) => state.auth.user);
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
+
+  // Get profile image URL
+  const getProfileImageUrl = () => {
+    if (user?.profileImage) {
+      if (user.profileImage.startsWith('http')) return user.profileImage;
+      return `${SERVER_BASE_URL}${user.profileImage}`;
+    }
+    return null;
+  };
+
+  const profileImageUrl = getProfileImageUrl();
+
+  // Calculate level and XP progress
+  const level = user?.level || 1;
+  const xpPoints = user?.xpPoints || 0;
+  const xpForCurrentLevel = (level - 1) * 1000;
+  const xpForNextLevel = level * 1000;
+  const levelProgress = (xpPoints - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel);
+  const xpToNextLevel = xpForNextLevel - xpPoints;
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-background border-r border-[var(--card-border)] flex flex-col z-40">
@@ -67,17 +91,17 @@ export default function Sidebar() {
       <div className="px-4 py-4">
         <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-foreground-secondary">Level {userStats.level}</span>
-            <span className="text-xs text-primary-500 font-semibold">{userStats.xpPoints} XP</span>
+            <span className="text-xs font-medium text-foreground-secondary">Level {level}</span>
+            <span className="text-xs text-primary-500 font-semibold">{xpPoints} XP</span>
           </div>
           <div className="progress-bar h-2 mb-2">
             <div
               className="progress-bar-fill"
-              style={{ width: `${userStats.levelProgress * 100}%` }}
+              style={{ width: `${Math.max(0, Math.min(100, levelProgress * 100))}%` }}
             />
           </div>
           <p className="text-xs text-foreground-secondary">
-            {Math.round((userStats.nextLevelXp - userStats.xpPoints))} XP to Level {userStats.level + 1}
+            {xpToNextLevel > 0 ? `${xpToNextLevel} XP to Level ${level + 1}` : 'Max level reached!'}
           </p>
         </div>
       </div>
@@ -134,15 +158,27 @@ export default function Sidebar() {
           href="/profile"
           className="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
-            {getInitials(currentUser.firstName, currentUser.lastName)}
+          {/* Profile Image or Initials */}
+          <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+            {profileImageUrl ? (
+              <Image
+                src={profileImageUrl}
+                alt="Profile"
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
+                {getInitials(user?.firstName, user?.lastName)}
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm truncate">
-              {currentUser.firstName} {currentUser.lastName}
+              {user?.firstName || 'User'} {user?.lastName || ''}
             </p>
             <p className="text-xs text-foreground-secondary truncate">
-              {currentUser.email}
+              {user?.email || 'user@example.com'}
             </p>
           </div>
         </Link>

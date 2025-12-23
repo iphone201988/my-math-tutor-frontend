@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -11,6 +12,7 @@ import { useTheme } from '@/components/providers/ThemeProvider';
 import { useGetMeQuery, useUpdateProfileMutation } from '@/store/userApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUser } from '@/store/authSlice';
+import { useToast } from '@/components/providers/ToastProvider';
 
 const LEVELS = [
   { id: 'primary', label: 'Primary', grades: '1-5', icon: '⭐', defaultLevel: 1 },
@@ -18,10 +20,16 @@ const LEVELS = [
   { id: 'college', label: 'College', grades: '11+', icon: '🎓', defaultLevel: 11 },
 ];
 
+const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const { theme, setTheme } = useTheme();
   const dispatch = useDispatch();
+  const toast = useToast();
+  const fileInputRef = useRef(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // Fetch user data from API
   const { data: userData, isLoading } = useGetMeQuery();
@@ -63,17 +71,65 @@ export default function SettingsPage() {
     }
   }, [user]);
 
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please select a valid image file (jpg, png, gif, webp)');
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Get profile image URL
+  const getProfileImageUrl = () => {
+    if (imagePreview) return imagePreview;
+    if (user?.profileImage) {
+      if (user.profileImage.startsWith('http')) return user.profileImage;
+      return `${SERVER_BASE_URL}${user.profileImage}`;
+    }
+    return null;
+  };
+
+  const profileImageUrl = getProfileImageUrl();
+
   const handleSaveProfile = async () => {
     try {
-      const response = await updateProfile({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-      }).unwrap();
+      const formDataToSend = new FormData();
+      formDataToSend.append('firstName', formData.firstName);
+      formDataToSend.append('lastName', formData.lastName);
+
+      if (selectedFile) {
+        formDataToSend.append('profileImage', selectedFile);
+      }
+
+      const response = await updateProfile(formDataToSend).unwrap();
       if (response.success) {
         dispatch(setUser(response.data));
+        setSelectedFile(null);
+        setImagePreview(null);
+        toast.success('Profile updated successfully! 🎉');
       }
     } catch (error) {
       console.error('Failed to update profile:', error);
+      toast.error('Failed to update profile. Please try again.');
     }
   };
 
@@ -86,9 +142,11 @@ export default function SettingsPage() {
       }).unwrap();
       if (response.success) {
         dispatch(setUser(response.data));
+        toast.success('Learning level updated!');
       }
     } catch (error) {
       console.error('Failed to update learning level:', error);
+      toast.error('Failed to update learning level.');
     }
   };
 
@@ -151,16 +209,50 @@ export default function SettingsPage() {
                   <CardTitle>Profile Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Avatar */}
+                  {/* Avatar with upload */}
                   <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-2xl">
-                      {getInitials(user?.firstName, user?.lastName)}
-                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleImageClick}
+                      className="relative w-20 h-20 rounded-full overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      title="Click to change profile picture"
+                    >
+                      {profileImageUrl ? (
+                        <Image
+                          src={profileImageUrl}
+                          alt="Profile"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-2xl">
+                          {getInitials(user?.firstName, user?.lastName)}
+                        </div>
+                      )}
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-white text-xl">📷</span>
+                      </div>
+                    </button>
                     <div>
-                      <Button variant="secondary" size="sm">Upload Photo</Button>
+                      <Button variant="secondary" size="sm" onClick={handleImageClick}>
+                        Upload Photo
+                      </Button>
                       <p className="text-xs text-foreground-secondary mt-2">
-                        JPG, PNG or GIF. Max 2MB.
+                        JPG, PNG, GIF or WebP. Max 5MB.
                       </p>
+                      {selectedFile && (
+                        <p className="text-xs text-primary-500 mt-1">
+                          ✓ New image selected - click Save to apply
+                        </p>
+                      )}
                     </div>
                   </div>
 
