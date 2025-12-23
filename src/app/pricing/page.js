@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { SUBSCRIPTION_TIERS } from '@/lib/constants';
 import { useState } from 'react';
+import DarkThemeEnforcer from '@/components/providers/DarkThemeEnforcer';
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState('monthly');
@@ -37,8 +38,9 @@ export default function PricingPage() {
     ];
 
     return (
-        <div data-theme="dark">
-            <Header />
+        <DarkThemeEnforcer>
+            <div>
+                <Header />
             <main className="pt-24 pb-20 overflow-x-hidden">
                 {/* Animated Background Mesh */}
                 <div className="fixed inset-0 pointer-events-none -z-10">
@@ -203,5 +205,6 @@ export default function PricingPage() {
             </main>
             <Footer />
         </div>
+        </DarkThemeEnforcer>
     );
 }
