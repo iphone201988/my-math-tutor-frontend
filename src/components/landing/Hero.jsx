@@ -123,7 +123,7 @@ export default function Hero() {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="px-4 py-1 bg-neutral-800 rounded-md text-neutral-400 text-xs">
-                    mathmentor.ai/solve
+                    MathTutor.ai/solve
                   </div>
                 </div>
               </div>

@@ -24,11 +24,11 @@ const exo2 = Exo_2({
 });
 
 export const metadata = {
-  title: "MathMentor AI - Your Personal AI Mathematics Tutor",
+  title: "MathTutor AI - Your Personal AI Mathematics Tutor",
   description: "Master mathematics with AI-powered guidance. Snap problems, get Socratic hints, and learn step-by-step from Grade 1 to College.",
   keywords: ["math tutor", "AI education", "mathematics learning", "online tutoring", "calculus", "algebra"],
   openGraph: {
-    title: "MathMentor AI - Your Personal AI Mathematics Tutor",
+    title: "MathTutor AI - Your Personal AI Mathematics Tutor",
     description: "Master mathematics with AI-powered guidance. Snap problems, get Socratic hints, and learn step-by-step.",
     type: "website",
   },

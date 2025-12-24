@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card';
 const testimonials = [
   {
     id: 1,
-    content: "MathMentor AI completely changed how I study. Instead of just showing answers, it actually teaches me how to think through problems. My grades went from C to A- in just two months!",
+    content: "MathTutor AI completely changed how I study. Instead of just showing answers, it actually teaches me how to think through problems. My grades went from C to A- in just two months!",
     author: "Priya Sharma",
     role: "10th Grade Student",
     avatar: "PS",
@@ -30,7 +30,7 @@ const testimonials = [
   },
   {
     id: 4,
-    content: "I recommend MathMentor to all my students who need extra help. The Socratic method prevents them from developing a dependency on just copying answers.",
+    content: "I recommend MathTutor AI to all my students who need extra help. The Socratic method prevents them from developing a dependency on just copying answers.",
     author: "Dr. Amit Patel",
     role: "Math Teacher",
     avatar: "AP",
