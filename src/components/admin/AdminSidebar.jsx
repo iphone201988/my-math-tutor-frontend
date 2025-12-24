@@ -12,7 +12,7 @@ export default function AdminSidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-72 bg-background border-r border-[var(--card-border)] flex flex-col z-40">
       {/* Logo */}
-      <div className="p-6 border-b border-[var(--card-border)]">
+      <div className="p-6 border-b border-[var(--card-border)] h-[72px]">
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
             <span className="text-xl">🛡️</span>
