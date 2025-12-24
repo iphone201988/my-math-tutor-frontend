@@ -1,19 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { aiSettings, activityLog } from '@/data/admin-data';
+import { activityLog } from '@/data/admin-data';
 import { cn } from '@/lib/utils';
 
 const TABS = [
-  { id: 'ai', label: 'AI Configuration', icon: '🤖' },
   { id: 'system', label: 'System', icon: '⚙️' },
   { id: 'logs', label: 'Activity Logs', icon: '📋' },
   { id: 'security', label: 'Security', icon: '🔐' },
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('ai');
-  const [settings, setSettings] = useState(aiSettings);
+  const [activeTab, setActiveTab] = useState('system');
 
   return (
     <div className="space-y-6">
@@ -21,7 +19,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-foreground-secondary">Configure AI, system, and security settings</p>
+          <p className="text-foreground-secondary">Configure system and security settings</p>
         </div>
         <button className="btn btn-primary">
           <span>💾</span>
@@ -50,192 +48,6 @@ export default function SettingsPage() {
 
       {/* Tab Content */}
       <div>
-        {/* AI Configuration */}
-        {activeTab === 'ai' && (
-          <div className="space-y-6">
-            {/* LLM Settings */}
-            <div className="glass-card p-6">
-              <h3 className="font-semibold mb-4">Language Model (LLM) Settings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">LLM Provider</label>
-                  <select
-                    defaultValue={settings.llmProvider}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  >
-                    <option value="openai">OpenAI</option>
-                    <option value="anthropic">Anthropic</option>
-                    <option value="google">Google AI</option>
-                    <option value="custom">Custom Endpoint</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Model</label>
-                  <select
-                    defaultValue={settings.llmModel}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  >
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                    <option value="claude-3-opus">Claude 3 Opus</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Tutor Model</label>
-                  <select
-                    defaultValue={settings.tutorModel}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  >
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  </select>
-                  <p className="text-xs text-foreground-secondary mt-1">Used for Socratic teaching interactions</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Content Generator Model</label>
-                  <select
-                    defaultValue={settings.contentModel}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  >
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  </select>
-                  <p className="text-xs text-foreground-secondary mt-1">Used for generating lessons and exercises</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Max Tokens</label>
-                  <input
-                    type="number"
-                    defaultValue={settings.maxTokens}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Temperature</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="2"
-                    defaultValue={settings.temperature}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  />
-                  <p className="text-xs text-foreground-secondary mt-1">0 = deterministic, 1+ = more creative</p>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" defaultChecked={settings.socraticMode} className="w-5 h-5 rounded border-neutral-300" />
-                  <div>
-                    <span className="text-sm font-medium">Socratic Mode</span>
-                    <p className="text-xs text-foreground-secondary">AI gives hints only, never final answers</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Image Generation Settings */}
-            <div className="glass-card p-6">
-              <h3 className="font-semibold mb-4">Image Generation (Stable Diffusion)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" defaultChecked={settings.imageGeneration.enabled} className="w-5 h-5 rounded border-neutral-300" />
-                    <div>
-                      <span className="text-sm font-medium">Enable Image Generation</span>
-                      <p className="text-xs text-foreground-secondary">Generate images for lessons and exercises</p>
-                    </div>
-                  </label>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Provider</label>
-                  <select
-                    defaultValue={settings.imageGeneration.provider}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  >
-                    <option value="stable-diffusion">Stable Diffusion</option>
-                    <option value="dall-e">DALL-E 3</option>
-                    <option value="midjourney">Midjourney API</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Style Preset</label>
-                  <select
-                    defaultValue={settings.imageGeneration.style}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  >
-                    <option value="educational-illustration">Educational Illustration</option>
-                    <option value="cartoon-kids">Cartoon (Kids)</option>
-                    <option value="flat-vector">Flat Vector</option>
-                    <option value="realistic">Realistic</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">API Endpoint</label>
-                  <input
-                    type="url"
-                    defaultValue={settings.imageGeneration.endpoint}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Max Images per Topic</label>
-                  <input
-                    type="number"
-                    defaultValue={settings.imageGeneration.maxPerTopic}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Content Filters */}
-            <div className="glass-card p-6">
-              <h3 className="font-semibold mb-4">Content Filters</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Blocked Topics</label>
-                  <textarea
-                    defaultValue={settings.contentFilters.blockedTopics.join('\n')}
-                    rows={4}
-                    className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all resize-none"
-                    placeholder="One topic per line..."
-                  />
-                  <p className="text-xs text-foreground-secondary mt-1">Topics AI should never discuss</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Allowed Languages</label>
-                  <div className="space-y-2">
-                    {['English', 'Hindi', 'Spanish', 'French', 'German'].map((lang) => (
-                      <label key={lang} className="flex items-center gap-2 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          defaultChecked={['English', 'Hindi'].includes(lang)}
-                          className="rounded border-neutral-300" 
-                        />
-                        <span className="text-sm">{lang}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* System Settings */}
         {activeTab === 'system' && (

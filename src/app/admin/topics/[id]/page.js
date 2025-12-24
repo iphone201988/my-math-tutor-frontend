@@ -196,13 +196,13 @@ export default function TopicEditorPage() {
                             <label className="block text-sm font-medium mb-2">Prerequisites</label>
                             <select
                                 multiple
+                                defaultValue={topic.prerequisites || []}
                                 className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all min-h-[100px]"
                             >
                                 {topics.filter(t => t.id !== topic.id).map((t) => (
                                     <option
                                         key={t.id}
                                         value={t.id}
-                                        selected={topic.prerequisites?.includes(t.id)}
                                     >
                                         {t.title}
                                     </option>
