@@ -3,7 +3,7 @@
 // Admin User
 export const adminUser = {
   id: 'admin-001',
-  email: 'admin@mathmentor.ai',
+  email: 'admin@mathtutor.ai',
   firstName: 'System',
   lastName: 'Admin',
   role: 'admin',

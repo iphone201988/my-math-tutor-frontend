@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext({
   theme: 'system',
   resolvedTheme: 'light',
-  setTheme: () => {},
+  setTheme: () => { },
 });
 
 export function useTheme() {
@@ -34,13 +34,16 @@ export default function ThemeProvider({ children }) {
 
     const updateTheme = () => {
       let newResolvedTheme = theme;
-      
+
       if (theme === 'system') {
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         newResolvedTheme = systemPrefersDark ? 'dark' : 'light';
       }
-      
+
       setResolvedTheme(newResolvedTheme);
+
+      // Also apply to document.documentElement for global CSS selectors
+      document.documentElement.setAttribute('data-theme', newResolvedTheme);
     };
 
     updateTheme();

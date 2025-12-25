@@ -31,11 +31,11 @@ export default function AdminLoginPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Demo credentials check
-    if (email === 'admin@mathmentor.ai' && password === 'admin123') {
+    if (email === 'admin@mathtutor.ai' && password === 'admin123') {
       localStorage.setItem('adminToken', 'demo-admin-token');
       router.push('/admin/dashboard');
     } else {
-      setError('Invalid credentials. Use admin@mathmentor.ai / admin123');
+      setError('Invalid credentials. Use admin@mathtutor.ai / admin123');
       setIsLoading(false);
     }
   };
@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
           <div className="mb-6 p-3 rounded-lg bg-primary-500/10 border border-primary-500/20 text-sm">
             <p className="text-primary-400 font-medium mb-1">Demo Credentials:</p>
             <p className="text-foreground-secondary">
-              Email: <code className="text-primary-300">admin@mathmentor.ai</code>
+              Email: <code className="text-primary-300">admin@mathtutor.ai</code>
             </p>
             <p className="text-foreground-secondary">
               Password: <code className="text-primary-300">admin123</code>
@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
               label="Email Address"
               type="email"
               name="email"
-              placeholder="admin@mathmentor.ai"
+              placeholder="admin@mathtutor.ai"
               required
               icon={<span>📧</span>}
             />

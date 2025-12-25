@@ -59,7 +59,7 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium mb-2">App Name</label>
                   <input
                     type="text"
-                    defaultValue="MathMentor AI"
+                    defaultValue="MathTutor AI"
                     className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
                   />
                 </div>
@@ -68,7 +68,7 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium mb-2">Support Email</label>
                   <input
                     type="email"
-                    defaultValue="support@mathmentor.ai"
+                    defaultValue="support@mathtutor.ai"
                     className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
                   />
                 </div>
@@ -194,7 +194,7 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium mb-2">Admin Email</label>
                   <input
                     type="email"
-                    defaultValue="admin@mathmentor.ai"
+                    defaultValue="admin@mathtutor.ai"
                     className="w-full px-4 py-3 text-sm bg-neutral-100 dark:bg-neutral-800 border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all"
                   />
                 </div>

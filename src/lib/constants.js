@@ -1,6 +1,6 @@
 // Application constants
 
-export const APP_NAME = 'MathMentor AI';
+export const APP_NAME = 'MathTutor AI';
 export const APP_TAGLINE = 'Your Personal AI Mathematics Tutor';
 
 export const GRADE_BANDS = {
@@ -84,10 +84,10 @@ export const SUBSCRIPTION_TIERS = {
 };
 
 export const SOCIAL_LINKS = {
-  twitter: 'https://twitter.com/mathmentor',
-  instagram: 'https://instagram.com/mathmentor',
-  youtube: 'https://youtube.com/@mathmentor',
-  discord: 'https://discord.gg/mathmentor'
+  twitter: 'https://twitter.com/mathtutor',
+  instagram: 'https://instagram.com/mathtutor',
+  youtube: 'https://youtube.com/@mathtutor',
+  discord: 'https://discord.gg/mathtutor'
 };
 
 export const API_ROUTES = {

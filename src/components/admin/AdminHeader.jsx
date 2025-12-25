@@ -226,7 +226,7 @@ export default function AdminHeader() {
             <div className="absolute right-0 top-full mt-2 w-56 bg-background border border-[var(--card-border)] rounded-xl shadow-xl overflow-hidden">
               <div className="p-3 border-b border-[var(--card-border)]">
                 <p className="font-medium text-sm">Super Admin</p>
-                <p className="text-xs text-foreground-secondary">admin@mathmentor.ai</p>
+                <p className="text-xs text-foreground-secondary">admin@mathtutor.ai</p>
               </div>
               <div className="py-1">
                 <Link

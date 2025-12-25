@@ -144,10 +144,10 @@ export default function HelpPage() {
                             </div>
                         </div>
                         <a
-                            href="mailto:support@mathmentor.ai"
+                            href="mailto:support@mathtutor.ai"
                             className="text-sm text-primary-500 hover:text-primary-400 font-medium transition-colors"
                         >
-                            support@mathmentor.ai
+                            support@mathtutor.ai
                         </a>
                     </div>
 
@@ -206,8 +206,8 @@ export default function HelpPage() {
 
             {/* Version Info */}
             <div className="text-center text-sm text-foreground-secondary py-4">
-                <p>MathMentor AI Admin Panel v1.0.0</p>
-                <p className="text-xs mt-1">© 2025 MathMentor AI. All rights reserved.</p>
+                <p>MathTutor AI Admin Panel v1.0.0</p>
+                <p className="text-xs mt-1">© 2025 MathTutor AI. All rights reserved.</p>
             </div>
         </div>
     );
