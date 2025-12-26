@@ -27,6 +27,44 @@ export default function CapturePage() {
   const cameraInputRef = useRef(null);
   const pollingIntervalRef = useRef(null);
 
+  // Helper function to normalize OCR result and ensure blocks are always present
+  const normalizeOcrResult = (result) => {
+    if (!result) return null;
+
+    // Start with a normalized structure
+    const normalized = {
+      blocks: [],
+      layoutMarkdown: result.layoutMarkdown || result.layout_markdown || '',
+      qualityScore: result.qualityScore || result.quality_score || 0,
+      processingTime: result.processingTime || result.processing_time_ms || 0,
+      imageInfo: result.imageInfo || result.image_info || { width: 0, height: 0, format: '' },
+      warnings: result.warnings || [],
+    };
+
+    // Try to get blocks from result
+    if (result.blocks && Array.isArray(result.blocks) && result.blocks.length > 0) {
+      normalized.blocks = result.blocks;
+    }
+    // If no blocks but we have layoutMarkdown, create a synthetic block from it
+    else if (normalized.layoutMarkdown && normalized.layoutMarkdown.trim()) {
+      // Check if it looks like LaTeX/math content
+      const hasLatex = normalized.layoutMarkdown.includes('\\') ||
+        normalized.layoutMarkdown.includes('$') ||
+        /[×÷∑∏∫√∞±≤≥≠≈]/.test(normalized.layoutMarkdown);
+
+      normalized.blocks = [{
+        type: hasLatex ? 'formula' : 'text',
+        latex: hasLatex ? normalized.layoutMarkdown : undefined,
+        content: normalized.layoutMarkdown,
+        confidence: 0.8,
+        bbox: [0, 0, 0, 0],
+      }];
+    }
+
+    console.log('📊 Normalized OCR Result:', normalized);
+    return normalized;
+  };
+
   // Get progress stage description
   const getProgressDescription = (progress) => {
     if (progress <= 10) return '🚀 Starting job processing...';
@@ -78,10 +116,12 @@ export default function CapturePage() {
             pollingIntervalRef.current = null;
           }
           setPollingStatus('🎉 Processing complete!');
-          setOcrResult(result);
+          // Normalize the result to ensure consistent structure
+          const normalizedResult = normalizeOcrResult(result);
+          setOcrResult(normalizedResult);
           setProgress(100);
           setUploadState('done');
-          console.log('✅ OCR Complete:', result);
+          console.log('✅ OCR Complete:', normalizedResult);
           break;
         case 'failed':
           // Job failed - stop polling and show error
