@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import AppleSignInButton from '@/components/auth/AppleSignInButton';
 import { APP_NAME } from '@/lib/constants';
 import { useSignupMutation } from '@/store/authApi';
 import { useToast } from '@/components/providers/ToastProvider';
@@ -17,6 +19,18 @@ export default function RegisterPage() {
 
   // RTK Query mutation hook
   const [signup, { isLoading, isSuccess, isError, error: apiError }] = useSignupMutation();
+  const [showApple, setShowApple] = useState(false);
+
+  // Detect iOS on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const platform = navigator.platform?.toLowerCase() || '';
+      const isIOS = /iphone|ipad|ipod/.test(userAgent) || 
+        (platform === 'macintel' && navigator.maxTouchPoints > 1);
+      setShowApple(isIOS);
+    }
+  }, []);
 
   // Handle API errors
   useEffect(() => {
@@ -152,15 +166,9 @@ export default function RegisterPage() {
           </div>
 
           {/* Social Login */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="secondary" className="w-full">
-              <span className="mr-2">G</span>
-              Google
-            </Button>
-            <Button variant="secondary" className="w-full">
-              <span className="mr-2">🍎</span>
-              Apple
-            </Button>
+          <div className={showApple ? "grid grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+            <GoogleSignInButton className="w-full" />
+            <AppleSignInButton className="w-full" />
           </div>
 
           {/* Sign In Link */}

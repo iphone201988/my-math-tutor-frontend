@@ -75,6 +75,36 @@ export const authApi = createApi({
         }),
 
         /**
+         * Google signin (social login)
+         * POST /auth/google
+         */
+        googleSignin: builder.mutation({
+            query: (data) => ({
+                url: '/google',
+                method: 'POST',
+                body: data,
+            }),
+            // Store tokens and user on successful login
+            async onQueryStarted(arg, { queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    if (data.success && data.data) {
+                        const { user, tokens } = data.data;
+                        const { accessToken, refreshToken } = tokens || {};
+
+                        if (typeof window !== 'undefined') {
+                            if (accessToken) localStorage.setItem('accessToken', accessToken);
+                            if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+                            if (user) localStorage.setItem('user', JSON.stringify(user));
+                        }
+                    }
+                } catch {
+                    // Error handling is done by the component
+                }
+            },
+        }),
+
+        /**
          * Verify email with token
          * POST /auth/verify-email
          */
@@ -191,6 +221,7 @@ export const authApi = createApi({
 export const {
     useSignupMutation,
     useSigninMutation,
+    useGoogleSigninMutation,
     useVerifyEmailMutation,
     useForgotPasswordMutation,
     useResetPasswordMutation,
