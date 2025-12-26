@@ -162,7 +162,7 @@ function SolvePageContent() {
     return (
       <div
         key={msg.id}
-        className={`flex gap-4 ${isTeacher ? '' : 'flex-row-reverse'} animate-fadeIn`}
+        className={`flex gap-4 ${isTeacher ? '' : 'flex-row-reverse'} animate-fade-in`}
       >
         {/* Avatar */}
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 shadow-lg ${isTeacher
@@ -176,41 +176,46 @@ function SolvePageContent() {
         <div className={`max-w-[80%] ${isTeacher ? '' : 'text-right'}`}>
           {/* Name and time */}
           <div className={`flex items-center gap-2 mb-1 ${isTeacher ? '' : 'justify-end'}`}>
-            <span className="text-sm font-medium">{isTeacher ? 'Math Tutor' : 'You'}</span>
+            <span className="text-sm font-medium text-foreground">{isTeacher ? 'Math Tutor' : 'You'}</span>
             <span className="text-xs text-foreground-secondary">
               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
 
-          <div className={`rounded-2xl px-5 py-4 shadow-sm ${isTeacher
-            ? 'bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-tl-sm'
-            : 'bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-tr-sm'
-            }`}>
+          <div
+            className={`rounded-2xl px-5 py-4 ${isTeacher ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
+            style={{
+              background: isTeacher ? 'var(--card-bg)' : 'var(--gradient-primary)',
+              border: isTeacher ? '1px solid var(--card-border)' : 'none',
+              color: isTeacher ? 'var(--foreground)' : 'white',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
             {/* Type indicator */}
             {msg.type === 'hint' && (
-              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium mb-3">
+              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mb-3 badge-warning">
                 <span>💡</span> Hint
               </div>
             )}
             {msg.type === 'success' && (
-              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium mb-3">
+              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mb-3 badge-success">
                 <span>🎉</span> Correct!
               </div>
             )}
             {msg.type === 'welcome' && (
-              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium mb-3">
+              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mb-3 badge-primary">
                 <span>👋</span> Welcome
               </div>
             )}
 
             {/* Message content */}
-            <div className={`text-sm leading-relaxed whitespace-pre-wrap ${isTeacher ? 'text-foreground' : ''}`}>
+            <div className="text-sm leading-relaxed whitespace-pre-wrap">
               {renderMessageContent(msg.message)}
             </div>
 
             {/* LaTeX if present */}
             {msg.latex && (
-              <div className={`mt-4 p-4 rounded-xl ${isTeacher ? 'bg-neutral-50 dark:bg-neutral-900' : 'bg-primary-600/50'}`}>
+              <div className="mt-4 p-4 rounded-xl" style={{ background: 'var(--background-secondary)' }}>
                 <MathRenderer latex={msg.latex} display />
               </div>
             )}
@@ -259,12 +264,15 @@ function SolvePageContent() {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed inset-0 lg:ml-64 flex items-center justify-center bg-gradient-to-br from-violet-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-800">
+      <div
+        className="fixed inset-0 lg:ml-64 flex items-center justify-center"
+        style={{ background: 'var(--background)' }}
+      >
         <div className="text-center">
           <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-4xl mb-6 shadow-xl animate-pulse">
             🤖
           </div>
-          <h3 className="text-xl font-semibold mb-2">Loading Your Session...</h3>
+          <h3 className="text-xl font-semibold mb-2 text-foreground">Loading Your Session...</h3>
           <p className="text-foreground-secondary">
             Preparing your math problem
           </p>
@@ -281,12 +289,15 @@ function SolvePageContent() {
   // Error state
   if (error) {
     return (
-      <div className="fixed inset-0 lg:ml-64 flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 dark:from-neutral-900 dark:to-neutral-800">
+      <div
+        className="fixed inset-0 lg:ml-64 flex items-center justify-center"
+        style={{ background: 'var(--background)' }}
+      >
         <div className="text-center max-w-md px-6">
           <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-4xl mb-6 shadow-xl">
             😕
           </div>
-          <h3 className="text-xl font-semibold mb-2">Oops! Something went wrong</h3>
+          <h3 className="text-xl font-semibold mb-2 text-foreground">Oops! Something went wrong</h3>
           <p className="text-foreground-secondary mb-8">
             {error}
           </p>
@@ -303,12 +314,15 @@ function SolvePageContent() {
   // No session state
   if (!sessionId || !session) {
     return (
-      <div className="fixed inset-0 lg:ml-64 flex items-center justify-center bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900">
+      <div
+        className="fixed inset-0 lg:ml-64 flex items-center justify-center"
+        style={{ background: 'var(--background)' }}
+      >
         <div className="text-center max-w-lg px-6">
           <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-5xl mb-8 shadow-2xl">
             📸
           </div>
-          <h3 className="text-2xl font-bold mb-3">Ready to Learn?</h3>
+          <h3 className="text-2xl font-bold mb-3 text-foreground">Ready to Learn?</h3>
           <p className="text-foreground-secondary text-lg mb-8">
             Capture a math problem to start your personalized tutoring session with AI.
           </p>
@@ -328,25 +342,34 @@ function SolvePageContent() {
   const problemDisplay = getProblemDisplay();
 
   return (
-    <div className="fixed inset-0 lg:ml-64 flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 to-slate-100 dark:from-neutral-900 dark:to-neutral-800">
+    <div
+      className="fixed inset-0 lg:ml-64 flex flex-col lg:flex-row"
+      style={{ background: 'var(--background)' }}
+    >
       {/* Problem Sidebar (Desktop) */}
-      <div className="hidden lg:flex lg:flex-col w-96 border-r border-neutral-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-xl">
+      <div
+        className="hidden lg:flex lg:flex-col w-96"
+        style={{
+          background: 'var(--card-bg)',
+          borderRight: '1px solid var(--card-border)',
+        }}
+      >
         <div className="flex-1 overflow-y-auto">
           {/* Header */}
-          <div className="p-6 border-b border-neutral-100 dark:border-neutral-700">
+          <div className="p-6" style={{ borderBottom: '1px solid var(--card-border)' }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xl">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xl shadow-lg">
                 📐
               </div>
               <div>
-                <h2 className="font-bold">Current Problem</h2>
+                <h2 className="font-bold text-foreground">Current Problem</h2>
                 <p className="text-xs text-foreground-secondary">Step {currentStep} of 5</p>
               </div>
             </div>
             {/* Progress Bar */}
-            <div className="mt-4 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+            <div className="mt-4 progress-bar">
               <div
-                className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
+                className="progress-bar-fill"
                 style={{ width: `${(currentStep / 5) * 100}%` }}
               />
             </div>
@@ -354,10 +377,16 @@ function SolvePageContent() {
 
           <div className="p-6 space-y-6">
             {/* Problem Card */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800">
+            <div
+              className="p-5 rounded-2xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+              }}
+            >
               <p className="text-sm text-foreground-secondary mb-3">{problemDisplay.text}</p>
               {problemDisplay.latex && (
-                <div className="p-4 bg-white dark:bg-neutral-800 rounded-xl shadow-sm">
+                <div className="p-4 rounded-xl card">
                   <MathRenderer latex={problemDisplay.latex} display />
                 </div>
               )}
@@ -365,11 +394,11 @@ function SolvePageContent() {
               {session.blocks && session.blocks.length > 1 && (
                 <div className="mt-3 space-y-2">
                   {session.blocks.slice(1).map((block, i) => (
-                    <div key={i} className="p-3 bg-white dark:bg-neutral-800 rounded-xl">
+                    <div key={i} className="p-3 rounded-xl card">
                       {block.type === 'formula' && block.latex ? (
                         <MathRenderer latex={block.latex} display />
                       ) : (
-                        <p className="text-sm">{block.content}</p>
+                        <p className="text-sm text-foreground">{block.content}</p>
                       )}
                     </div>
                   ))}
@@ -381,23 +410,31 @@ function SolvePageContent() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-lg">💡</span>
-                <h3 className="font-semibold">Available Hints</h3>
+                <h3 className="font-semibold text-foreground">Available Hints</h3>
               </div>
               <div className="space-y-2">
                 {defaultHints.map((hint, i) => (
                   <button
                     key={i}
                     className={`w-full p-4 rounded-xl text-left text-sm transition-all duration-300 ${revealedHints.includes(i)
-                      ? 'bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800'
-                      : 'bg-neutral-50 dark:bg-neutral-800 border-2 border-transparent hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:border-neutral-200 dark:hover:border-neutral-600'
+                      ? 'badge-warning'
+                      : ''
                       }`}
+                    style={{
+                      background: revealedHints.includes(i) ? 'rgba(234, 179, 8, 0.15)' : 'var(--background-secondary)',
+                      border: revealedHints.includes(i) ? '2px solid rgba(234, 179, 8, 0.4)' : '2px solid transparent',
+                      color: 'var(--foreground)',
+                    }}
                     onClick={() => revealHint(i)}
                   >
                     {revealedHints.includes(i) ? (
-                      <span className="text-foreground">{hint}</span>
+                      <span>{hint}</span>
                     ) : (
                       <span className="flex items-center gap-2 text-foreground-secondary">
-                        <span className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-medium">
+                        <span
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
+                          style={{ background: 'var(--card-border)' }}
+                        >
                           {i + 1}
                         </span>
                         Click to reveal hint
@@ -413,9 +450,9 @@ function SolvePageContent() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">📷</span>
-                  <h3 className="font-semibold">Original Image</h3>
+                  <h3 className="font-semibold text-foreground">Original Image</h3>
                 </div>
-                <div className="rounded-xl overflow-hidden border-2 border-neutral-100 dark:border-neutral-700">
+                <div className="rounded-xl overflow-hidden" style={{ border: '2px solid var(--card-border)' }}>
                   <img
                     src={`data:image/jpeg;base64,${session.imageBase64}`}
                     alt="Captured problem"
@@ -435,25 +472,34 @@ function SolvePageContent() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div
+        className="flex-1 flex flex-col min-w-0"
+        style={{ background: 'var(--background-secondary)' }}
+      >
         {/* Header - Fixed */}
-        <div className="flex-shrink-0 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-xl border-b border-neutral-200 dark:border-neutral-700 px-6 py-4">
+        <div
+          className="flex-shrink-0 px-6 py-4"
+          style={{
+            background: 'var(--card-bg)',
+            borderBottom: '1px solid var(--card-border)',
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg">
                 🤖
               </div>
               <div>
-                <h1 className="font-bold text-lg">AI Math Tutor</h1>
+                <h1 className="font-bold text-lg text-foreground">AI Math Tutor</h1>
                 <p className="text-sm text-foreground-secondary">
                   Step-by-step problem solving
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full badge-success">
                 <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-medium text-green-700 dark:text-green-400">Online</span>
+                <span className="text-sm font-medium">Online</span>
               </div>
             </div>
           </div>
@@ -465,17 +511,23 @@ function SolvePageContent() {
 
           {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex gap-4 animate-fadeIn">
+            <div className="flex gap-4 animate-fade-in">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xl shadow-lg">
                 🤖
               </div>
               <div>
-                <div className="text-sm font-medium mb-1">Math Tutor</div>
-                <div className="flex items-center gap-2 px-5 py-4 bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-2xl rounded-tl-sm shadow-sm">
+                <div className="text-sm font-medium mb-1 text-foreground">Math Tutor</div>
+                <div
+                  className="flex items-center gap-2 px-5 py-4 rounded-2xl rounded-tl-sm"
+                  style={{
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--card-border)',
+                  }}
+                >
                   <div className="flex gap-1.5">
-                    <span className="w-2.5 h-2.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2.5 h-2.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2.5 h-2.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-2.5 h-2.5 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2.5 h-2.5 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2.5 h-2.5 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                   <span className="text-sm text-foreground-secondary ml-2">Thinking...</span>
                 </div>
@@ -490,30 +542,36 @@ function SolvePageContent() {
         {messages.length < 3 && (
           <div className="px-6 pb-2">
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleQuickAction("I think this is a quadratic equation")}
-                className="px-4 py-2 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
-              >
-                🔢 Identify equation type
-              </button>
-              <button
-                onClick={() => handleQuickAction("Can you explain the first step?")}
-                className="px-4 py-2 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
-              >
-                📖 Explain first step
-              </button>
-              <button
-                onClick={() => handleQuickAction("Show me a similar example")}
-                className="px-4 py-2 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
-              >
-                💡 Show similar example
-              </button>
+              {[
+                { icon: '🔢', text: 'Identify equation type', action: "I think this is a quadratic equation" },
+                { icon: '📖', text: 'Explain first step', action: "Can you explain the first step?" },
+                { icon: '💡', text: 'Show similar example', action: "Show me a similar example" },
+              ].map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleQuickAction(item.action)}
+                  className="px-4 py-2 rounded-full text-sm transition-all hover-lift"
+                  style={{
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--foreground)',
+                  }}
+                >
+                  {item.icon} {item.text}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
         {/* Input Area - Fixed */}
-        <div className="flex-shrink-0 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-xl border-t border-neutral-200 dark:border-neutral-700 p-4">
+        <div
+          className="flex-shrink-0 p-4"
+          style={{
+            background: 'var(--card-bg)',
+            borderTop: '1px solid var(--card-border)',
+          }}
+        >
           <div className="flex gap-3 max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <Textarea
@@ -521,7 +579,7 @@ function SolvePageContent() {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Type your answer or ask a question..."
                 rows={2}
-                className="resize-none pr-24 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 focus:border-primary-500"
+                className="resize-none rounded-2xl input"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -557,12 +615,15 @@ function SolvePageContent() {
 export default function SolvePage() {
   return (
     <Suspense fallback={
-      <div className="fixed inset-0 lg:ml-64 flex items-center justify-center bg-gradient-to-br from-violet-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-800">
+      <div
+        className="fixed inset-0 lg:ml-64 flex items-center justify-center"
+        style={{ background: 'var(--background)' }}
+      >
         <div className="text-center">
           <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-4xl mb-6 shadow-xl animate-pulse">
             🤖
           </div>
-          <h3 className="text-xl font-semibold mb-2">Loading...</h3>
+          <h3 className="text-xl font-semibold mb-2 text-foreground">Loading...</h3>
         </div>
       </div>
     }>
