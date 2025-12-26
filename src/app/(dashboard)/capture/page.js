@@ -31,31 +31,39 @@ export default function CapturePage() {
   const normalizeOcrResult = (result) => {
     if (!result) return null;
 
-    // Start with a normalized structure
+    // Start with a normalized structure, handling both camelCase and snake_case
     const normalized = {
       blocks: [],
-      layoutMarkdown: result.layoutMarkdown || result.layout_markdown || '',
-      qualityScore: result.qualityScore || result.quality_score || 0,
-      processingTime: result.processingTime || result.processing_time_ms || 0,
+      layoutMarkdown: result.layoutMarkdown || result.layout_markdown || result.markdown || result.latex || result.content || '',
+      qualityScore: result.qualityScore || result.quality_score || result.score || 0,
+      processingTime: result.processingTime || result.processing_time_ms || result.time || 0,
       imageInfo: result.imageInfo || result.image_info || { width: 0, height: 0, format: '' },
       warnings: result.warnings || [],
     };
 
-    // Try to get blocks from result
-    if (result.blocks && Array.isArray(result.blocks) && result.blocks.length > 0) {
-      normalized.blocks = result.blocks;
+    // Try to get blocks from result (check multiple naming conventions)
+    const rawBlocks = result.blocks || result.content_blocks || result.contentBlocks || result.res || [];
+    if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
+      normalized.blocks = rawBlocks.map(block => ({
+        type: block.type || (block.latex ? 'formula' : 'text'),
+        latex: block.latex || (block.type === 'formula' ? block.content : undefined),
+        content: block.content || block.latex || '',
+        confidence: block.confidence !== undefined ? block.confidence : 0.9,
+        bbox: block.bbox || [0, 0, 0, 0],
+      }));
     }
     // If no blocks but we have layoutMarkdown, create a synthetic block from it
     else if (normalized.layoutMarkdown && normalized.layoutMarkdown.trim()) {
+      const content = normalized.layoutMarkdown.trim();
       // Check if it looks like LaTeX/math content
-      const hasLatex = normalized.layoutMarkdown.includes('\\') ||
-        normalized.layoutMarkdown.includes('$') ||
-        /[×÷∑∏∫√∞±≤≥≠≈]/.test(normalized.layoutMarkdown);
+      const hasLatex = content.includes('\\') ||
+        content.includes('$') ||
+        /[×÷∑∏∫√∞±≤≥≠≈]/.test(content);
 
       normalized.blocks = [{
         type: hasLatex ? 'formula' : 'text',
-        latex: hasLatex ? normalized.layoutMarkdown : undefined,
-        content: normalized.layoutMarkdown,
+        latex: hasLatex ? content : undefined,
+        content: content,
         confidence: 0.8,
         bbox: [0, 0, 0, 0],
       }];
@@ -200,7 +208,7 @@ export default function CapturePage() {
       // Create FormData for API call
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('strategy', 'formula_only');
+      formData.append('strategy', 'pix2tex_only');
       formData.append('language', 'en');
 
       console.log('📤 Uploading to backend...', {
