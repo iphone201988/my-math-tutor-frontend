@@ -139,14 +139,48 @@ export const authApi = createApi({
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('refreshToken');
                         localStorage.removeItem('user');
+                        localStorage.removeItem('adminToken');
                     }
                 } catch {
-                    // Still clear local storage even if API call fails
                     if (typeof window !== 'undefined') {
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('refreshToken');
                         localStorage.removeItem('user');
+                        localStorage.removeItem('adminToken');
                     }
+                }
+            },
+        }),
+
+        /**
+         * Admin signin (login)
+         * POST /admin/auth/signin
+         * Only for users with ADMIN or SUPER_ADMIN role
+         */
+        adminSignin: builder.mutation({
+            query: (credentials) => ({
+                url: `${API_BASE_URL}/admin/auth/signin`,
+                method: 'POST',
+                body: credentials,
+            }),
+            // Store tokens and user on successful admin login
+            async onQueryStarted(arg, { queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    if (data.success && data.data) {
+                        const { user, tokens } = data.data;
+                        const { accessToken, refreshToken } = tokens || {};
+
+                        if (typeof window !== 'undefined') {
+                            if (accessToken) localStorage.setItem('accessToken', accessToken);
+                            if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+                            if (user) localStorage.setItem('user', JSON.stringify(user));
+                            // Set admin token flag
+                            localStorage.setItem('adminToken', 'true');
+                        }
+                    }
+                } catch {
+                    // Error handling is done by the component
                 }
             },
         }),
@@ -162,4 +196,5 @@ export const {
     useResetPasswordMutation,
     useResendVerificationMutation,
     useLogoutMutation,
+    useAdminSigninMutation,
 } = authApi;

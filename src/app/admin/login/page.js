@@ -7,10 +7,11 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { APP_NAME } from '@/lib/constants';
+import { useAdminSigninMutation } from '@/store/authApi';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [adminSignin, { isLoading }] = useAdminSigninMutation();
   const [error, setError] = useState('');
 
   // Force dark theme for admin login
@@ -20,23 +21,35 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
 
     const formData = new FormData(e.target);
     const email = formData.get('email');
     const password = formData.get('password');
 
-    // Simulate authentication (dummy)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const result = await adminSignin({
+        email,
+        password,
+      }).unwrap();
 
-    // Demo credentials check
-    if (email === 'admin@mathtutor.ai' && password === 'admin123') {
-      localStorage.setItem('adminToken', 'demo-admin-token');
-      router.push('/admin/dashboard');
-    } else {
-      setError('Invalid credentials. Use admin@mathtutor.ai / admin123');
-      setIsLoading(false);
+      if (result.success) {
+        router.push('/admin/dashboard');
+      } else {
+        setError(result.error?.message || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Admin login error:', err);
+      // Handle specific error messages from API
+      if (err?.data?.error?.message) {
+        setError(err.data.error.message);
+      } else if (err?.status === 403) {
+        setError('Access denied. Admin privileges required.');
+      } else if (err?.status === 401) {
+        setError('Invalid email or password.');
+      } else {
+        setError('Login failed. Please check your credentials and try again.');
+      }
     }
   };
 
@@ -70,14 +83,11 @@ export default function AdminLoginPage() {
             </p>
           </div>
 
-          {/* Demo Credentials Notice */}
+          {/* Info Notice */}
           <div className="mb-6 p-3 rounded-lg bg-primary-500/10 border border-primary-500/20 text-sm">
-            <p className="text-primary-400 font-medium mb-1">Demo Credentials:</p>
+            <p className="text-primary-400 font-medium mb-1">🔐 Secure Admin Area</p>
             <p className="text-foreground-secondary">
-              Email: <code className="text-primary-300">admin@mathtutor.ai</code>
-            </p>
-            <p className="text-foreground-secondary">
-              Password: <code className="text-primary-300">admin123</code>
+              Only users with admin role can access this area.
             </p>
           </div>
 
@@ -93,7 +103,7 @@ export default function AdminLoginPage() {
               label="Email Address"
               type="email"
               name="email"
-              placeholder="admin@mathtutor.ai"
+              placeholder="admin@example.com"
               required
               icon={<span>📧</span>}
             />
