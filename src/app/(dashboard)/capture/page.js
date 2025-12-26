@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Card, { CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import MathRenderer from '@/components/chat/MathRenderer';
 
-// OCR API endpoint
-const OCR_API_URL = 'http://192.168.0.148:8501/ocr';
+// Backend API Base URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function CapturePage() {
+  const router = useRouter();
   const [uploadState, setUploadState] = useState('idle'); // idle, uploading, processing, done, error
   const [ocrResult, setOcrResult] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -19,16 +19,105 @@ export default function CapturePage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  const [jobId, setJobId] = useState(null);
+  const [pollingStatus, setPollingStatus] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
+
+  // Get progress stage description
+  const getProgressDescription = (progress) => {
+    if (progress <= 10) return '🚀 Starting job processing...';
+    if (progress <= 20) return '📦 Decoding image...';
+    if (progress <= 30) return '📋 Preparing data...';
+    if (progress <= 40) return '🔌 Connecting to OCR service...';
+    if (progress <= 50) return '📤 Sending image to OCR...';
+    if (progress <= 60) return '📥 Receiving OCR response...';
+    if (progress <= 70) return '✅ Validating results...';
+    if (progress <= 80) return '🔄 Transforming data...';
+    if (progress <= 90) return '📝 Finalizing results...';
+    return '✨ Almost done!';
+  };
+
+  // Poll for job status
+  const pollJobStatus = useCallback(async (jobId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/ocr/job/${jobId}`);
+      const data = await response.json();
+
+      console.log('📊 Job Status:', data);
+
+      if (!data.success) {
+        throw new Error(data.error?.message || 'Failed to get job status');
+      }
+
+      const { status, progress: jobProgress, result, error } = data.data;
+
+      // Update progress
+      if (jobProgress !== undefined) {
+        setProgress(jobProgress);
+        // Update polling status with descriptive message
+        setPollingStatus(`${getProgressDescription(jobProgress)} (${jobProgress}%)`);
+      }
+
+      // Update polling status for UI based on job status
+      switch (status) {
+        case 'waiting':
+          setPollingStatus('⏳ Job queued, waiting for worker...');
+          setProgress(5);
+          break;
+        case 'active':
+          // Progress and status already set above
+          break;
+        case 'completed':
+          // Job completed - stop polling and show result
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          setPollingStatus('🎉 Processing complete!');
+          setOcrResult(result);
+          setProgress(100);
+          setUploadState('done');
+          console.log('✅ OCR Complete:', result);
+          break;
+        case 'failed':
+          // Job failed - stop polling and show error
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          throw new Error(error || 'OCR processing failed');
+      }
+
+    } catch (error) {
+      console.error('Polling Error:', error);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      setErrorMessage(error.message || 'Failed to process image');
+      setUploadState('error');
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Process file and call OCR API
   const processFile = async (file) => {
     if (!file) return;
 
     // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'];
+    const validTypes = ['image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       setErrorMessage('Invalid file type. Please upload JPG, PNG, HEIC, or WebP images.');
       setUploadState('error');
@@ -44,6 +133,8 @@ export default function CapturePage() {
 
     setSelectedFile(file);
     setErrorMessage('');
+    setJobId(null);
+    setPollingStatus('');
 
     // Create image preview
     const reader = new FileReader();
@@ -62,7 +153,7 @@ export default function CapturePage() {
             clearInterval(progressInterval);
             return 90;
           }
-          return prev + 10;
+          return prev + 15;
         });
       }, 100);
 
@@ -72,43 +163,99 @@ export default function CapturePage() {
       formData.append('strategy', 'formula_only');
       formData.append('language', 'en');
 
-      setProgress(100);
-      clearInterval(progressInterval);
-      setUploadState('processing');
+      console.log('📤 Uploading to backend...', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      });
 
-      // Call OCR API
-      const response = await fetch(OCR_API_URL, {
+      // Call backend OCR capture API
+      const response = await fetch(`${API_BASE_URL}/ocr/capture`, {
         method: 'POST',
         body: formData,
       });
 
+      clearInterval(progressInterval);
+      setProgress(100);
+
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `Server error: ${response.status}`);
       }
 
       const data = await response.json();
 
+      console.log('📋 Job Created:', data);
+
       if (!data.success) {
-        throw new Error(data.error || 'OCR processing failed');
+        throw new Error(data.error?.message || 'Failed to create OCR job');
       }
 
-      // Transform API response to match our expected format
-      const result = {
-        blocks: data.blocks || [],
-        layoutMarkdown: data.layout_markdown || '',
-        qualityScore: data.quality_score || 0,
-        processingTime: data.processing_time_ms || 0,
-        imageInfo: data.image_info || {},
-        warnings: data.warnings || [],
-      };
+      // Job created - now poll for status
+      const newJobId = data.data.jobId;
+      setJobId(newJobId);
+      setUploadState('processing');
+      setProgress(0);
+      setPollingStatus('Job created, starting processing...');
 
-      setOcrResult(result);
-      setUploadState('done');
+      // Start polling for job status
+      pollingIntervalRef.current = setInterval(() => {
+        pollJobStatus(newJobId);
+      }, 1500); // Poll every 1.5 seconds
+
+      // Do an immediate first poll
+      pollJobStatus(newJobId);
 
     } catch (error) {
       console.error('OCR API Error:', error);
       setErrorMessage(error.message || 'Failed to process image. Please try again.');
       setUploadState('error');
+    }
+  };
+
+  // Save session and start solving
+  const handleStartSolving = async () => {
+    if (!ocrResult || !jobId) return;
+
+    setIsSaving(true);
+
+    try {
+      console.log('📚 Saving learning session...');
+
+      // Create session with OCR result
+      const response = await fetch(`${API_BASE_URL}/sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jobId,
+          fileName: selectedFile?.name || 'uploaded_image',
+          strategy: 'formula_only',
+          blocks: ocrResult.blocks || [],
+          layoutMarkdown: ocrResult.layoutMarkdown || '',
+          qualityScore: ocrResult.qualityScore || 0,
+          processingTime: ocrResult.processingTime || 0,
+          imageInfo: ocrResult.imageInfo || {},
+          imageBase64: imagePreview?.split(',')[1] || '', // Remove data:image/xxx;base64, prefix
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error?.message || 'Failed to save session');
+      }
+
+      console.log('✅ Session saved:', data.data);
+
+      // Navigate to solve page with session ID
+      router.push(`/solve?session=${data.data.sessionId}`);
+
+    } catch (error) {
+      console.error('Error saving session:', error);
+      setErrorMessage(error.message || 'Failed to save session');
+      setIsSaving(false);
     }
   };
 
@@ -155,12 +302,19 @@ export default function CapturePage() {
 
   // Reset state
   const reset = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
     setUploadState('idle');
     setOcrResult(null);
     setProgress(0);
     setSelectedFile(null);
     setImagePreview(null);
     setErrorMessage('');
+    setJobId(null);
+    setPollingStatus('');
+    setIsSaving(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
@@ -172,7 +326,7 @@ export default function CapturePage() {
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/jpeg,image/png,image/heic,image/webp"
+        accept="image/jpeg,image/png,image/heic,image/heif,image/webp"
         className="hidden"
       />
       <input
@@ -253,14 +407,57 @@ export default function CapturePage() {
 
           {uploadState === 'processing' && (
             <Card>
-              <CardContent className="py-12 text-center">
+              <CardContent className="py-10 text-center">
                 <div className="w-16 h-16 mx-auto rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-3xl mb-4">
                   <span className="animate-spin">⚙️</span>
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Processing Image...</h3>
-                <p className="text-foreground-secondary text-sm">
-                  Our AI is analyzing the math content
-                </p>
+
+                {/* Progress Bar */}
+                <div className="w-full max-w-md mx-auto mt-6">
+                  <div className="flex justify-between text-xs text-foreground-secondary mb-2">
+                    <span>Progress</span>
+                    <span className="font-semibold text-primary-500">{progress}%</span>
+                  </div>
+                  <div className="progress-bar h-3 mb-3 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                    <div
+                      className="progress-bar-fill h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+
+                  {/* Progress Steps */}
+                  <div className="flex justify-between mt-4 mb-4">
+                    {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((step) => (
+                      <div
+                        key={step}
+                        className={`w-2 h-2 rounded-full transition-all ${progress >= step
+                          ? 'bg-primary-500 scale-125'
+                          : 'bg-neutral-300 dark:bg-neutral-600'
+                          }`}
+                        title={`${step}%`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Current Status */}
+                {pollingStatus && (
+                  <div className="mt-4 p-3 rounded-lg bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800">
+                    <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">
+                      {pollingStatus}
+                    </p>
+                  </div>
+                )}
+
+                {/* Job ID */}
+                {jobId && (
+                  <p className="text-xs text-foreground-secondary mt-4 font-mono opacity-60">
+                    Job: {jobId}
+                  </p>
+                )}
+
+                {/* Loading dots */}
                 <div className="flex justify-center gap-1 mt-4">
                   <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -288,10 +485,21 @@ export default function CapturePage() {
                   </p>
                 )}
                 <div className="flex gap-3 justify-center">
-                  <Link href="/solve">
-                    <Button>Start Solving →</Button>
-                  </Link>
-                  <Button variant="secondary" onClick={reset}>
+                  <Button
+                    onClick={handleStartSolving}
+                    disabled={isSaving}
+                    className="min-w-[140px]"
+                  >
+                    {isSaving ? (
+                      <>
+                        <span className="animate-spin mr-2">⏳</span>
+                        Saving...
+                      </>
+                    ) : (
+                      'Start Solving →'
+                    )}
+                  </Button>
+                  <Button variant="secondary" onClick={reset} disabled={isSaving}>
                     Upload Another
                   </Button>
                 </div>
@@ -369,7 +577,12 @@ export default function CapturePage() {
         <div className="space-y-6">
           <Card>
             <CardContent>
-              <h3 className="font-semibold mb-4">Detected Content</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Detected Content</h3>
+                {ocrResult && (
+                  <span className="text-xs text-green-500 font-medium">✓ Results Available</span>
+                )}
+              </div>
 
               {!ocrResult ? (
                 <div className="py-16 text-center">
@@ -380,6 +593,16 @@ export default function CapturePage() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* Processing Info */}
+                  {ocrResult.processingTime > 0 && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                      <span className="text-green-600 dark:text-green-400">✓</span>
+                      <span className="text-sm text-green-700 dark:text-green-300">
+                        Processed in {ocrResult.processingTime}ms
+                      </span>
+                    </div>
+                  )}
+
                   {/* Quality Score */}
                   {ocrResult.qualityScore > 0 && (
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800">
@@ -398,8 +621,17 @@ export default function CapturePage() {
                     </div>
                   )}
 
+                  {/* Image Info */}
+                  {ocrResult.imageInfo && ocrResult.imageInfo.width > 0 && (
+                    <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800">
+                      <span className="text-sm text-foreground-secondary">
+                        📐 Image: {ocrResult.imageInfo.width} × {ocrResult.imageInfo.height} ({ocrResult.imageInfo.format})
+                      </span>
+                    </div>
+                  )}
+
                   {/* Warnings */}
-                  {ocrResult.warnings?.length > 0 && (
+                  {ocrResult.warnings && ocrResult.warnings.length > 0 && (
                     <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
                       <p className="text-sm text-yellow-700 dark:text-yellow-300">
                         ⚠️ {ocrResult.warnings.join(', ')}
@@ -408,31 +640,47 @@ export default function CapturePage() {
                   )}
 
                   {/* Detected Blocks */}
-                  {ocrResult.blocks.map((block, i) => (
-                    <div
-                      key={i}
-                      className={`p-4 rounded-lg ${block.type === 'formula'
-                        ? 'bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800'
-                        : 'bg-neutral-50 dark:bg-neutral-800'
-                        }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`badge ${block.type === 'formula' ? 'badge-primary' : 'badge-secondary'}`}>
-                          {block.type === 'formula' ? '🧮 Formula' : '📝 Text'}
-                        </span>
-                        <span className="text-xs text-foreground-secondary">
-                          {Math.round(block.confidence * 100)}% confidence
-                        </span>
+                  <div>
+                    <h4 className="text-sm font-medium text-foreground-secondary mb-3">
+                      Detected Blocks ({ocrResult.blocks?.length || 0})
+                    </h4>
+                    {ocrResult.blocks && ocrResult.blocks.length > 0 ? (
+                      <div className="space-y-3">
+                        {ocrResult.blocks.map((block, i) => (
+                          <div
+                            key={i}
+                            className={`p-4 rounded-lg ${block.type === 'formula'
+                              ? 'bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800'
+                              : 'bg-neutral-50 dark:bg-neutral-800'
+                              }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${block.type === 'formula'
+                                ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                                : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'
+                                }`}>
+                                {block.type === 'formula' ? '🧮 Formula' : '📝 Text'}
+                              </span>
+                              <span className="text-xs text-foreground-secondary">
+                                {Math.round((block.confidence || 0) * 100)}% confidence
+                              </span>
+                            </div>
+                            {block.type === 'formula' && block.latex ? (
+                              <div className="py-2 overflow-x-auto">
+                                <MathRenderer latex={block.latex} display />
+                              </div>
+                            ) : (
+                              <p className="text-foreground">{block.content || block.latex || 'No content'}</p>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {block.type === 'formula' ? (
-                        <div className="py-2 overflow-x-auto">
-                          <MathRenderer latex={block.latex} display />
-                        </div>
-                      ) : (
-                        <p className="text-foreground">{block.content}</p>
-                      )}
-                    </div>
-                  ))}
+                    ) : (
+                      <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-center">
+                        <p className="text-foreground-secondary">No content blocks detected</p>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Full Markdown Preview */}
                   {ocrResult.layoutMarkdown && (
