@@ -26,29 +26,59 @@ export default function DashboardLayout({ children }) {
         // Check if localStorage has been initialized
         if (typeof window !== 'undefined') {
             const token = localStorage.getItem('accessToken');
-            if (!token && !isAuthenticated) {
-                router.replace('/login');
+            const user = localStorage.getItem('user');
+
+            // If we have token and user in localStorage, allow access
+            // Don't redirect immediately - wait for Redux state to sync
+            if (token && user) {
+                setAuthChecked(true);
                 return;
             }
+
+            // Only redirect if we're sure there's no auth
+            if (!token && !isAuthenticated) {
+                // Small delay to allow Redux state to initialize
+                const timer = setTimeout(() => {
+                    const stillNoToken = !localStorage.getItem('accessToken');
+                    const stillNotAuth = !isAuthenticated;
+                    if (stillNoToken && stillNotAuth) {
+                        router.replace('/login');
+                    } else {
+                        setAuthChecked(true);
+                    }
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+
             setAuthChecked(true);
         }
     }, [isAuthenticated, router]);
 
-    // Handle API errors (like jwt expired)
+    // Handle API errors (like jwt expired) - but only for actual auth errors
     useEffect(() => {
-        if (error) {
-            // Check if it's an auth error (401 or jwt expired)
-            const isAuthError = error.status === 401 || 
-                error.data?.error?.message?.includes('jwt expired') ||
-                error.data?.error?.message?.includes('No authentication token');
-            
+        if (error && authChecked) {
+            // Check if it's a real auth error (401 or jwt expired)
+            const isAuthError = error.status === 401 ||
+                (error.data?.error?.message && (
+                    error.data.error.message.includes('jwt expired') ||
+                    error.data.error.message.includes('No authentication token') ||
+                    error.data.error.message.includes('Invalid token') ||
+                    error.data.error.message.includes('Unauthorized')
+                ));
+
+            // Only logout if it's a confirmed auth error AND we've checked auth
             if (isAuthError) {
+                console.log('Auth error detected, logging out:', error);
                 // Clear auth state and redirect to login
                 dispatch(logout());
                 router.replace('/login');
             }
+            // For other errors (network, 500, etc.), don't logout - just log
+            else if (error.status !== undefined) {
+                console.warn('API error (non-auth):', error);
+            }
         }
-    }, [error, dispatch, router]);
+    }, [error, dispatch, router, authChecked]);
 
     // Use current user from state or freshly fetched user
     const currentUser = userData?.data || user;

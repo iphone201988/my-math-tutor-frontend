@@ -26,15 +26,26 @@ export default function LoginPage() {
 
     // Check if already authenticated and redirect
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !isRedirecting) {
             const token = localStorage.getItem('accessToken');
-            if (token && isAuthenticated) {
-                // Already logged in, redirect to dashboard
-                router.replace('/dashboard');
-                return;
+            const user = localStorage.getItem('user');
+            
+            // If we have both token and user, redirect to dashboard
+            if (token && user) {
+                try {
+                    // Verify user data is valid JSON
+                    JSON.parse(user);
+                    setIsRedirecting(true);
+                    router.replace('/dashboard');
+                } catch (e) {
+                    // Invalid user data, clear it
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                }
             }
         }
-    }, [isAuthenticated, router]);
+    }, [isAuthenticated, router, isRedirecting]);
 
     // Detect iOS on mount
     useEffect(() => {
@@ -74,29 +85,53 @@ export default function LoginPage() {
     // Redirect on success - wait for auth state to be updated
     useEffect(() => {
         if (isSuccess && !isRedirecting) {
+            setIsRedirecting(true);
+            
             // Wait for tokens to be stored and Redux state to update
             const checkAndRedirect = () => {
                 if (typeof window !== 'undefined') {
                     const token = localStorage.getItem('accessToken');
                     const user = localStorage.getItem('user');
+
+                    // Check if tokens are stored (don't require isAuthenticated to be true yet)
+                    if (token && user) {
+                        try {
+                            // Verify user data is valid
+                            const userData = JSON.parse(user);
+                            if (userData && token) {
+                                toast.success('Welcome back! Redirecting to dashboard...');
+                                // Use replace to avoid back button issues
+                                router.replace('/dashboard');
+                                return;
+                            }
+                        } catch (e) {
+                            console.error('Invalid user data in localStorage:', e);
+                            // Clear invalid data
+                            localStorage.removeItem('user');
+                            localStorage.removeItem('accessToken');
+                            localStorage.removeItem('refreshToken');
+                            setIsRedirecting(false);
+                            return;
+                        }
+                    }
                     
-                    // Check if tokens are stored and Redux state is updated
-                    if (token && user && isAuthenticated) {
-                        setIsRedirecting(true);
-                        toast.success('Welcome back! Redirecting to dashboard...');
-                        // Use replace to avoid back button issues
-                        router.replace('/dashboard');
-                    } else {
-                        // Retry after a short delay if state not updated yet
+                    // Retry after a short delay if state not updated yet (max 10 retries = 1 second)
+                    const retryCount = checkAndRedirect.retryCount || 0;
+                    if (retryCount < 10) {
+                        checkAndRedirect.retryCount = retryCount + 1;
                         setTimeout(checkAndRedirect, 100);
+                    } else {
+                        // Timeout - something went wrong
+                        console.error('Login redirect timeout - tokens not found');
+                        setIsRedirecting(false);
                     }
                 }
             };
-            
+
             // Start checking after a brief delay to allow state updates
-            setTimeout(checkAndRedirect, 200);
+            setTimeout(checkAndRedirect, 300);
         }
-    }, [isSuccess, isAuthenticated, router, toast, isRedirecting]);
+    }, [isSuccess, router, toast, isRedirecting]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -113,7 +148,7 @@ export default function LoginPage() {
                 password,
                 deviceType: 'web',
             }).unwrap();
-            
+
             // Ensure tokens are stored before proceeding
             if (result.success && result.data) {
                 // Wait a moment for localStorage and Redux state to update
