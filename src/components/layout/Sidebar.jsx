@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn, getInitials } from '@/lib/utils';
 import { APP_NAME } from '@/lib/constants';
 import { useTheme } from '@/components/providers/ThemeProvider';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useLogoutMutation } from '@/store/authApi';
+import { logout } from '@/store/authSlice';
+import { useToast } from '@/components/providers/ToastProvider';
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 
@@ -25,13 +28,44 @@ const bottomNavItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useDispatch();
   const { resolvedTheme, setTheme } = useTheme();
 
   // Get actual user data from Redux
   const user = useSelector((state) => state.auth.user);
 
+  // Logout mutation
+  const [logoutMutation] = useLogoutMutation();
+  
+  // Toast hook
+  const toast = useToast();
+
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      // Call logout API
+      await logoutMutation().unwrap();
+      
+      // Dispatch logout action to clear Redux state
+      dispatch(logout());
+      
+      // Show success message
+      toast.success('Logged out successfully');
+      
+      // Redirect to login page
+      router.push('/login');
+    } catch (error) {
+      // Even if API call fails, clear local state and redirect
+      console.error('Logout error:', error);
+      dispatch(logout());
+      toast.error('Logged out (some data may not have been cleared)');
+      router.push('/login');
+    }
   };
 
   // Get profile image URL
@@ -142,14 +176,13 @@ export default function Sidebar() {
 
       {/* Logout Button */}
       <div className="px-4 pb-2">
-        <Link href="/login">
-          <button
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-all"
-          >
-            <span className="text-lg">🚪</span>
-            Logout
-          </button>
-        </Link>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-all"
+        >
+          <span className="text-lg">🚪</span>
+          Logout
+        </button>
       </div>
 
       {/* User Profile */}

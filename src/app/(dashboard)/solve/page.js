@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Card, { CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
-import MathRenderer from '@/components/chat/MathRenderer';
+import MathRenderer, { MathText } from '@/components/chat/MathRenderer';
 import { currentUser } from '@/data/users';
 import { getInitials } from '@/lib/utils';
 
@@ -32,10 +32,28 @@ function SolvePageContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [revealedHints, setRevealedHints] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [agentSessionId, setAgentSessionId] = useState(null); // Agent service session ID
+  const [gradeLevel, setGradeLevel] = useState('primary'); // Default grade level
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Get auth headers
+  const getAuthHeaders = () => {
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    
+    return headers;
   };
 
   useEffect(() => {
@@ -62,7 +80,83 @@ function SolvePageContent() {
         console.log('✅ Session loaded:', data.data);
         setSession(data.data);
 
-        // Create initial welcome message based on session data
+        // Extract grade level from user profile if available (could be stored in session or user data)
+        // For now, default to 'primary', but could be enhanced to get from user profile
+        const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            if (user.gradeLevel) {
+              setGradeLevel(user.gradeLevel);
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+
+        // Get current problem LaTeX
+        const currentProblemLatex = (() => {
+          const blocks = data.data.blocks || [];
+          const formulaBlock = blocks.find(b => b.type === 'formula' && b.latex);
+          if (formulaBlock && formulaBlock.latex) {
+            return formulaBlock.latex;
+          }
+          return data.data.layoutMarkdown || '';
+        })();
+
+        // Send initial welcome message to agent to establish session
+        if (currentProblemLatex) {
+          try {
+            const agentResponse = await fetch(`${API_BASE_URL}/agent/chat`, {
+              method: 'POST',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                sessionId: null, // New session
+                studentMessage: 'Hello, I need help with this problem',
+                gradeLevel: gradeLevel,
+                currentTopic: data.data.topic || 'algebra',
+                currentProblem: currentProblemLatex,
+                studentAnswer: null,
+              }),
+            });
+
+            if (agentResponse.ok) {
+              const agentData = await agentResponse.json();
+              if (agentData.success) {
+                const { jobId } = agentData.data;
+                
+                // Update agent session ID
+                if (agentData.data.sessionId) {
+                  setAgentSessionId(agentData.data.sessionId);
+                }
+
+                // Poll for welcome message
+                const result = await pollAgentJobStatus(jobId, 30, 500);
+                
+                if (result.sessionId) {
+                  setAgentSessionId(result.sessionId);
+                }
+
+                const welcomeMessage = {
+                  id: 'welcome',
+                  role: 'teacher',
+                  type: result.messageType || 'welcome',
+                  message: result.agentMessage,
+                  latexBlocks: result.latexBlocks || [],
+                  timestamp: new Date().toISOString(),
+                };
+
+                setMessages([welcomeMessage]);
+                return; // Exit early if agent message received
+              }
+            }
+          } catch (error) {
+            console.error('Error getting welcome message from agent:', error);
+            // Fall through to default welcome message
+          }
+        }
+
+        // Fallback welcome message if agent call fails
         const blocks = data.data.blocks || [];
         const hasFormula = blocks.some(b => b.type === 'formula');
 
@@ -96,60 +190,262 @@ function SolvePageContent() {
     }
   };
 
+  // Get current problem LaTeX from session
+  const getCurrentProblemLatex = () => {
+    if (!session || !session.blocks) return '';
+    
+    // Try to find LaTeX from formula blocks
+    const formulaBlock = session.blocks.find(b => b.type === 'formula' && b.latex);
+    if (formulaBlock && formulaBlock.latex) {
+      return formulaBlock.latex;
+    }
+    
+    // Fallback to layoutMarkdown if available
+    if (session.layoutMarkdown) {
+      // Extract LaTeX from markdown (simple extraction)
+      const latexMatch = session.layoutMarkdown.match(/\$\$([^$]+)\$\$/);
+      if (latexMatch) return latexMatch[1];
+    }
+    
+    return session.layoutMarkdown || '';
+  };
+
+  // Poll for agent job status
+  const pollAgentJobStatus = async (jobId, maxAttempts = 60, interval = 500) => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/agent/chat/${jobId}`, {
+          headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error?.message || 'Failed to get job status');
+        }
+
+        const status = data.data;
+
+        // Update progress if available
+        if (status.progress !== undefined) {
+          // Could show progress indicator here
+        }
+
+        // If completed, return result
+        if (status.status === 'completed' && status.result) {
+          return status.result;
+        }
+
+        // If failed, throw error
+        if (status.status === 'failed') {
+          throw new Error(status.error || 'Agent job failed');
+        }
+
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, interval));
+      } catch (error) {
+        // On last attempt, throw error
+        if (attempt === maxAttempts - 1) {
+          throw error;
+        }
+        // Otherwise, wait and retry
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+    }
+    
+    throw new Error('Timeout waiting for agent response');
+  };
+
   const handleSend = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !session) return;
+
+    const studentMessage = inputValue.trim();
+    const currentProblemLatex = getCurrentProblemLatex();
+
+    if (!currentProblemLatex) {
+      alert('No problem data available. Please capture a problem first.');
+      return;
+    }
 
     // Add user message
     const userMessage = {
       id: `msg-${Date.now()}`,
       role: 'student',
-      message: inputValue,
+      message: studentMessage,
       timestamp: new Date().toISOString()
     };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response (replace with actual AI API call later)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Send chat request to agent API
+      const response = await fetch(`${API_BASE_URL}/agent/chat`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          sessionId: agentSessionId,
+          studentMessage: studentMessage,
+          gradeLevel: gradeLevel,
+          currentTopic: session.topic || 'algebra',
+          currentProblem: currentProblemLatex,
+          studentAnswer: null, // Could extract from message if it looks like an answer
+        }),
+      });
 
-    const responses = [
-      "Excellent thinking! 🌟 You're on the right track. Now, let's move to the next step...",
-      "That's a great approach! Let me guide you through what comes next...",
-      "Perfect! You've identified the key concept. Let's apply it...",
-      "Good observation! Now, can you think about how to simplify this further?",
-    ];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    const aiMessage = {
-      id: `msg-${Date.now() + 1}`,
-      role: 'teacher',
-      message: responses[Math.floor(Math.random() * responses.length)],
-      type: 'teaching',
-      timestamp: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, aiMessage]);
-    setIsTyping(false);
-    setCurrentStep(prev => Math.min(prev + 1, 5));
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error?.message || 'Failed to send message to agent');
+      }
+
+      const { jobId, status: jobStatus } = data.data;
+      
+      // Update agent session ID if provided
+      if (data.data.sessionId && !agentSessionId) {
+        setAgentSessionId(data.data.sessionId);
+      }
+
+      console.log('🤖 Agent job queued:', jobId);
+
+      // Poll for job completion
+      const result = await pollAgentJobStatus(jobId);
+
+      console.log('✅ Agent response received:', result);
+
+      // Update agent session ID from result
+      if (result.sessionId && !agentSessionId) {
+        setAgentSessionId(result.sessionId);
+      }
+
+      // Add agent response message
+      const aiMessage = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'teacher',
+        message: result.agentMessage,
+        type: result.messageType || 'teaching',
+        latex: result.latexBlocks && result.latexBlocks.length > 0 ? result.latexBlocks[0] : null,
+        latexBlocks: result.latexBlocks || [],
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      
+      // Update step based on message type
+      if (result.messageType === 'positive_feedback') {
+        setCurrentStep(prev => Math.min(prev + 1, 5));
+      }
+
+    } catch (error) {
+      console.error('Error sending message to agent:', error);
+      
+      // Show error message to user
+      const errorMessage = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'teacher',
+        message: `Sorry, I encountered an error: ${error.message}. Please try again.`,
+        type: 'error',
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleHint = async () => {
+    if (!session) return;
+
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const blocks = session?.blocks || [];
-    const firstFormula = blocks.find(b => b.type === 'formula');
+    const currentProblemLatex = getCurrentProblemLatex();
 
-    const hintMessage = {
-      id: `msg-${Date.now()}`,
-      role: 'teacher',
-      message: firstFormula
-        ? `💡 **Hint:** Looking at ${firstFormula.latex ? `$${firstFormula.latex}$` : 'the equation'}, try to identify the type of problem first. Is it a linear equation, quadratic, or something else?`
-        : `💡 **Hint:** Start by breaking down the problem into smaller parts. What information do you have, and what are you trying to find?`,
-      type: 'hint',
-      timestamp: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, hintMessage]);
-    setIsTyping(false);
+    if (!currentProblemLatex) {
+      alert('No problem data available. Please capture a problem first.');
+      setIsTyping(false);
+      return;
+    }
+
+    try {
+        // Send hint request to agent API
+        const response = await fetch(`${API_BASE_URL}/agent/chat`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        body: JSON.stringify({
+          sessionId: agentSessionId,
+          studentMessage: 'I need a hint',
+          gradeLevel: gradeLevel,
+          currentTopic: session.topic || 'algebra',
+          currentProblem: currentProblemLatex,
+          studentAnswer: null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error?.message || 'Failed to get hint from agent');
+      }
+
+      const { jobId } = data.data;
+      
+      // Update agent session ID if provided
+      if (data.data.sessionId && !agentSessionId) {
+        setAgentSessionId(data.data.sessionId);
+      }
+
+      // Poll for job completion
+      const result = await pollAgentJobStatus(jobId);
+
+      // Update agent session ID from result
+      if (result.sessionId && !agentSessionId) {
+        setAgentSessionId(result.sessionId);
+      }
+
+      // Add hint message
+      const hintMessage = {
+        id: `msg-${Date.now()}`,
+        role: 'teacher',
+        message: result.agentMessage,
+        type: 'hint',
+        latex: result.latexBlocks && result.latexBlocks.length > 0 ? result.latexBlocks[0] : null,
+        latexBlocks: result.latexBlocks || [],
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, hintMessage]);
+
+    } catch (error) {
+      console.error('Error getting hint from agent:', error);
+      
+      // Fallback hint message
+      const blocks = session?.blocks || [];
+      const firstFormula = blocks.find(b => b.type === 'formula');
+
+      const hintMessage = {
+        id: `msg-${Date.now()}`,
+        role: 'teacher',
+        message: firstFormula
+          ? `💡 **Hint:** Looking at ${firstFormula.latex ? `$${firstFormula.latex}$` : 'the equation'}, try to identify the type of problem first. Is it a linear equation, quadratic, or something else?`
+          : `💡 **Hint:** Start by breaking down the problem into smaller parts. What information do you have, and what are you trying to find?`,
+        type: 'hint',
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, hintMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleQuickAction = (action) => {
@@ -213,8 +509,18 @@ function SolvePageContent() {
               {renderMessageContent(msg.message)}
             </div>
 
-            {/* LaTeX if present */}
-            {msg.latex && (
+            {/* LaTeX blocks if present */}
+            {msg.latexBlocks && msg.latexBlocks.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {msg.latexBlocks.map((latex, idx) => (
+                  <div key={idx} className="p-4 rounded-xl" style={{ background: 'var(--background-secondary)' }}>
+                    <MathRenderer latex={latex} display />
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Fallback to single latex if no blocks */}
+            {!msg.latexBlocks && msg.latex && (
               <div className="mt-4 p-4 rounded-xl" style={{ background: 'var(--background-secondary)' }}>
                 <MathRenderer latex={msg.latex} display />
               </div>
@@ -226,17 +532,11 @@ function SolvePageContent() {
   };
 
   const renderMessageContent = (text) => {
-    // Simple markdown-like rendering
-    const parts = text.split(/(\$[^$]+\$|\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('$') && part.endsWith('$')) {
-        return <MathRenderer key={i} latex={part.slice(1, -1)} />;
-      }
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
+    if (!text) return '';
+    
+    // Use MathText component which handles LaTeX properly
+    // It splits by $$...$$ (display) and $...$ (inline) correctly
+    return <MathText text={text} className="inline" />;
   };
 
   // Get problem data for display

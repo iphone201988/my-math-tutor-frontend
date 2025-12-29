@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -16,10 +17,24 @@ export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
+    const { isAuthenticated } = useSelector((state) => state.auth);
     const [error, setError] = useState('');
     const justRegistered = searchParams.get('registered') === 'true';
     const passwordReset = searchParams.get('reset') === 'true';
     const [showApple, setShowApple] = useState(false);
+    const [isRedirecting, setIsRedirecting] = useState(false);
+
+    // Check if already authenticated and redirect
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('accessToken');
+            if (token && isAuthenticated) {
+                // Already logged in, redirect to dashboard
+                router.replace('/dashboard');
+                return;
+            }
+        }
+    }, [isAuthenticated, router]);
 
     // Detect iOS on mount
     useEffect(() => {
@@ -56,32 +71,57 @@ export default function LoginPage() {
         }
     }, [isError, apiError]);
 
-    // Redirect on success
+    // Redirect on success - wait for auth state to be updated
     useEffect(() => {
-        if (isSuccess) {
-            toast.success('Welcome back! Redirecting to dashboard...');
-            setTimeout(() => {
-                router.push('/dashboard');
-            }, 1000);
+        if (isSuccess && !isRedirecting) {
+            // Wait for tokens to be stored and Redux state to update
+            const checkAndRedirect = () => {
+                if (typeof window !== 'undefined') {
+                    const token = localStorage.getItem('accessToken');
+                    const user = localStorage.getItem('user');
+                    
+                    // Check if tokens are stored and Redux state is updated
+                    if (token && user && isAuthenticated) {
+                        setIsRedirecting(true);
+                        toast.success('Welcome back! Redirecting to dashboard...');
+                        // Use replace to avoid back button issues
+                        router.replace('/dashboard');
+                    } else {
+                        // Retry after a short delay if state not updated yet
+                        setTimeout(checkAndRedirect, 100);
+                    }
+                }
+            };
+            
+            // Start checking after a brief delay to allow state updates
+            setTimeout(checkAndRedirect, 200);
         }
-    }, [isSuccess, router]);
+    }, [isSuccess, isAuthenticated, router, toast, isRedirecting]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setIsRedirecting(false);
 
         const formData = new FormData(e.target);
         const email = formData.get('email');
         const password = formData.get('password');
 
         try {
-            await signin({
+            const result = await signin({
                 email,
                 password,
                 deviceType: 'web',
             }).unwrap();
+            
+            // Ensure tokens are stored before proceeding
+            if (result.success && result.data) {
+                // Wait a moment for localStorage and Redux state to update
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         } catch (err) {
             console.error('Login error details:', err);
+            setIsRedirecting(false);
         }
     };
 
