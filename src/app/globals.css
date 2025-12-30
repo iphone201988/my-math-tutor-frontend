@@ -602,22 +602,120 @@ body {
    KATEX CUSTOMIZATION
 ======================================== */
 
+/* Base KaTeX styling - Light theme */
 .katex {
   font-size: 1.1em;
+  color: var(--foreground);
 }
 
+/* KaTeX inline math */
+.katex .base {
+  color: var(--foreground);
+}
+
+/* KaTeX display math container */
 .katex-display {
   margin: 1rem 0;
   overflow-x: auto;
+  overflow-y: hidden;
   padding: 1rem;
   background: rgba(139, 92, 246, 0.05);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(139, 92, 246, 0.1);
 }
 
+.katex-display .katex {
+  color: var(--foreground);
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .katex {
+  color: var(--foreground);
+}
+
+[data-theme="dark"] .katex .base {
+  color: var(--foreground);
+}
+
 [data-theme="dark"] .katex-display {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.2);
+  background: var(--background-secondary) !important;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+[data-theme="dark"] .katex-display .katex {
+  color: var(--foreground);
+}
+
+/* Override KaTeX's default black text color for all elements */
+.katex,
+.katex * {
+  color: var(--foreground) !important;
+}
+
+/* Specific overrides for KaTeX math elements to ensure theme colors */
+.katex .mord,
+.katex .mop,
+.katex .mbin,
+.katex .mrel,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct,
+.katex .mord.mrel,
+.katex .mord.mbin,
+.katex .mord.mop,
+.katex .msupsub,
+.katex .mfrac,
+.katex .mroot,
+.katex .sqrt,
+.katex .vlist-t,
+.katex .vlist-r,
+.katex .vlist,
+.katex .delimsizing,
+.katex .nulldelimiter,
+.katex .sizing,
+.katex .fontsize-ensurer,
+.katex .textstyle,
+.katex .scriptstyle,
+.katex .scriptscriptstyle {
+  color: var(--foreground) !important;
+}
+
+/* Inline math styling */
+.katex-inline {
+  display: inline-block;
+}
+
+.katex-inline .katex {
+  color: var(--foreground) !important;
+}
+
+/* Fractions and other complex structures */
+.katex .frac-line {
+  border-bottom-color: var(--foreground);
+  opacity: 0.5;
+}
+
+[data-theme="dark"] .katex .frac-line {
+  border-bottom-color: var(--foreground);
+  opacity: 0.6;
+}
+
+/* Override any inline styles KaTeX might add */
+.katex [style*="color"] {
+  color: inherit !important;
+}
+
+/* Error messages */
+.katex .katex-error {
+  color: var(--error) !important;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+[data-theme="dark"] .katex .katex-error {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error) !important;
 }
 
 /* ========================================

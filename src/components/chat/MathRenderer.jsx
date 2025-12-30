@@ -65,6 +65,8 @@ const MathRenderer = memo(function MathRenderer({ latex, display = false, classN
 
   useEffect(() => {
     if (containerRef.current && latex) {
+      // Clear previous content
+      containerRef.current.innerHTML = '';
       renderLatex(latex, containerRef.current, display);
     }
   }, [latex, display]);
@@ -79,7 +81,7 @@ const MathRenderer = memo(function MathRenderer({ latex, display = false, classN
     );
   }
 
-  return <span ref={containerRef} className={className} />;
+  return <span ref={containerRef} className={`katex-inline ${className}`} />;
 });
 
 // Component to render text with embedded LaTeX expressions
