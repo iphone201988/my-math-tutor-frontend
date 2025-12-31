@@ -32,9 +32,16 @@ function SolvePageContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [revealedHints, setRevealedHints] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
-  const [agentSessionId, setAgentSessionId] = useState(null); // Agent service session ID
+  // Generate a unique agent session ID on the frontend
+  const [agentSessionId] = useState(() => {
+    // Generate a unique session ID using timestamp + random string
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substring(2, 10);
+    return `session_${timestamp}_${randomPart}`;
+  });
   const [gradeLevel, setGradeLevel] = useState('primary'); // Default grade level
   const messagesEndRef = useRef(null);
+  const initialAgentCallMade = useRef(false); // Prevent duplicate initial calls
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,14 +52,14 @@ function SolvePageContent() {
     const headers = {
       'Content-Type': 'application/json',
     };
-    
+
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken');
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
     }
-    
+
     return headers;
   };
 
@@ -105,13 +112,16 @@ function SolvePageContent() {
         })();
 
         // Send initial welcome message to agent to establish session
-        if (currentProblemLatex) {
+        // Only make the call once to prevent duplicate requests
+        if (currentProblemLatex && !initialAgentCallMade.current) {
+          initialAgentCallMade.current = true;
           try {
+            console.log('🔑 Using agent session ID:', agentSessionId);
             const agentResponse = await fetch(`${API_BASE_URL}/agent/chat`, {
               method: 'POST',
               headers: getAuthHeaders(),
               body: JSON.stringify({
-                sessionId: null, // New session
+                sessionId: agentSessionId, // Use frontend-generated session ID
                 studentMessage: 'Hello, I need help with this problem',
                 gradeLevel: gradeLevel,
                 currentTopic: data.data.topic || 'algebra',
@@ -124,18 +134,9 @@ function SolvePageContent() {
               const agentData = await agentResponse.json();
               if (agentData.success) {
                 const { jobId } = agentData.data;
-                
-                // Update agent session ID
-                if (agentData.data.sessionId) {
-                  setAgentSessionId(agentData.data.sessionId);
-                }
 
                 // Poll for welcome message
                 const result = await pollAgentJobStatus(jobId, 30, 500);
-                
-                if (result.sessionId) {
-                  setAgentSessionId(result.sessionId);
-                }
 
                 const welcomeMessage = {
                   id: 'welcome',
@@ -193,25 +194,25 @@ function SolvePageContent() {
   // Get current problem LaTeX from session
   const getCurrentProblemLatex = () => {
     if (!session || !session.blocks) return '';
-    
+
     // Try to find LaTeX from formula blocks
     const formulaBlock = session.blocks.find(b => b.type === 'formula' && b.latex);
     if (formulaBlock && formulaBlock.latex) {
       return formulaBlock.latex;
     }
-    
+
     // Fallback to layoutMarkdown if available
     if (session.layoutMarkdown) {
       // Extract LaTeX from markdown (simple extraction)
       const latexMatch = session.layoutMarkdown.match(/\$\$([^$]+)\$\$/);
       if (latexMatch) return latexMatch[1];
     }
-    
+
     return session.layoutMarkdown || '';
   };
 
-  // Poll for agent job status
-  const pollAgentJobStatus = async (jobId, maxAttempts = 60, interval = 500) => {
+  // Poll for agent job status - increased timeout for slow AI responses
+  const pollAgentJobStatus = async (jobId, maxAttempts = 120, interval = 1000) => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         const response = await fetch(`${API_BASE_URL}/agent/chat/${jobId}`, {
@@ -223,7 +224,7 @@ function SolvePageContent() {
         }
 
         const data = await response.json();
-        
+
         if (!data.success) {
           throw new Error(data.error?.message || 'Failed to get job status');
         }
@@ -256,7 +257,7 @@ function SolvePageContent() {
         await new Promise(resolve => setTimeout(resolve, interval));
       }
     }
-    
+
     throw new Error('Timeout waiting for agent response');
   };
 
@@ -302,17 +303,12 @@ function SolvePageContent() {
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error?.message || 'Failed to send message to agent');
       }
 
-      const { jobId, status: jobStatus } = data.data;
-      
-      // Update agent session ID if provided
-      if (data.data.sessionId && !agentSessionId) {
-        setAgentSessionId(data.data.sessionId);
-      }
+      const { jobId } = data.data;
 
       console.log('🤖 Agent job queued:', jobId);
 
@@ -320,11 +316,6 @@ function SolvePageContent() {
       const result = await pollAgentJobStatus(jobId);
 
       console.log('✅ Agent response received:', result);
-
-      // Update agent session ID from result
-      if (result.sessionId && !agentSessionId) {
-        setAgentSessionId(result.sessionId);
-      }
 
       // Add agent response message
       const aiMessage = {
@@ -336,9 +327,9 @@ function SolvePageContent() {
         latexBlocks: result.latexBlocks || [],
         timestamp: new Date().toISOString()
       };
-      
+
       setMessages(prev => [...prev, aiMessage]);
-      
+
       // Update step based on message type
       if (result.messageType === 'positive_feedback') {
         setCurrentStep(prev => Math.min(prev + 1, 5));
@@ -346,7 +337,7 @@ function SolvePageContent() {
 
     } catch (error) {
       console.error('Error sending message to agent:', error);
-      
+
       // Show error message to user
       const errorMessage = {
         id: `msg-${Date.now() + 1}`,
@@ -375,10 +366,10 @@ function SolvePageContent() {
     }
 
     try {
-        // Send hint request to agent API
-        const response = await fetch(`${API_BASE_URL}/agent/chat`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
+      // Send hint request to agent API
+      const response = await fetch(`${API_BASE_URL}/agent/chat`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           sessionId: agentSessionId,
           studentMessage: 'I need a hint',
@@ -394,25 +385,15 @@ function SolvePageContent() {
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error?.message || 'Failed to get hint from agent');
       }
 
       const { jobId } = data.data;
-      
-      // Update agent session ID if provided
-      if (data.data.sessionId && !agentSessionId) {
-        setAgentSessionId(data.data.sessionId);
-      }
 
       // Poll for job completion
       const result = await pollAgentJobStatus(jobId);
-
-      // Update agent session ID from result
-      if (result.sessionId && !agentSessionId) {
-        setAgentSessionId(result.sessionId);
-      }
 
       // Add hint message
       const hintMessage = {
@@ -428,7 +409,7 @@ function SolvePageContent() {
 
     } catch (error) {
       console.error('Error getting hint from agent:', error);
-      
+
       // Fallback hint message
       const blocks = session?.blocks || [];
       const firstFormula = blocks.find(b => b.type === 'formula');
@@ -533,7 +514,7 @@ function SolvePageContent() {
 
   const renderMessageContent = (text) => {
     if (!text) return '';
-    
+
     // Use MathText component which handles LaTeX properly
     // It splits by $$...$$ (display) and $...$ (inline) correctly
     return <MathText text={text} className="inline" />;
