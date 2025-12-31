@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
@@ -13,7 +13,7 @@ import { APP_NAME } from '@/lib/constants';
 import { useSigninMutation } from '@/store/authApi';
 import { useToast } from '@/components/providers/ToastProvider';
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
@@ -29,7 +29,7 @@ export default function LoginPage() {
         if (typeof window !== 'undefined' && !isRedirecting) {
             const token = localStorage.getItem('accessToken');
             const user = localStorage.getItem('user');
-            
+
             // If we have both token and user, redirect to dashboard
             if (token && user) {
                 try {
@@ -69,7 +69,7 @@ export default function LoginPage() {
         if (passwordReset) {
             toast.success('Password reset successful! You can now sign in with your new password.');
         }
-    }, []);
+    }, [justRegistered, passwordReset, toast]);
 
     // Handle API errors
     useEffect(() => {
@@ -80,13 +80,13 @@ export default function LoginPage() {
             setError(errorMessage);
             toast.error(errorMessage);
         }
-    }, [isError, apiError]);
+    }, [isError, apiError, toast]);
 
     // Redirect on success - wait for auth state to be updated
     useEffect(() => {
         if (isSuccess && !isRedirecting) {
             setIsRedirecting(true);
-            
+
             // Wait for tokens to be stored and Redux state to update
             const checkAndRedirect = () => {
                 if (typeof window !== 'undefined') {
@@ -114,7 +114,7 @@ export default function LoginPage() {
                             return;
                         }
                     }
-                    
+
                     // Retry after a short delay if state not updated yet (max 10 retries = 1 second)
                     const retryCount = checkAndRedirect.retryCount || 0;
                     if (retryCount < 10) {
@@ -283,3 +283,14 @@ export default function LoginPage() {
     );
 }
 
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center p-4 gradient-bg-mesh">
+                <div className="animate-pulse text-foreground-secondary">Loading...</div>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
+    );
+}

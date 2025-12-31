@@ -92,7 +92,7 @@ export default function HelpPage() {
                 <h2 className="font-semibold mb-4">Frequently Asked Questions</h2>
                 <div className="space-y-3">
                     {filteredFaqs.length === 0 ? (
-                        <p className="text-foreground-secondary text-center py-8">No results found for "{searchQuery}"</p>
+                        <p className="text-foreground-secondary text-center py-8">No results found for &quot;{searchQuery}&quot;</p>
                     ) : (
                         filteredFaqs.map((faq, index) => (
                             <div

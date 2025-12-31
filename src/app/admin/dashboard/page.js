@@ -15,7 +15,7 @@ export default function AdminDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-foreground-secondary">Welcome back! Here's what's happening.</p>
+          <p className="text-foreground-secondary">Welcome back! Here&apos;s what&apos;s happening.</p>
         </div>
         <div className="flex items-center gap-3">
           <button className="btn btn-secondary">
